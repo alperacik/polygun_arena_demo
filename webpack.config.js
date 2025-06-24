@@ -1,27 +1,29 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HtmlInlineScriptPlugin = require('html-inline-script-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   entry: './src/index.js',
   output: {
-    filename: 'bundle.[contenthash].js',
     path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle.js',
     clean: true,
   },
-  mode: 'development',
-  devServer: {
-    static: './dist',
-    open: true,
-    hot: true,
-  },
+  mode: 'production',
   plugins: [
     new HtmlWebpackPlugin({
-      template: './dist/index.html',
+      template: './src/template.html',
+      inject: 'body',
     }),
+    new HtmlInlineScriptPlugin(),
   ],
-  module: {
-    rules: [
-    
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        extractComments: false, // ✅ disables LICENSE.txt
+      }),
     ],
   },
 };
