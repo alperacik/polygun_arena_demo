@@ -1,15 +1,13 @@
 import * as THREE from 'three';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 
 // Import FBX and PNG as base64 strings
 // import fbxBase64 from '../assets/character/sk_char_sergeant_arms_fp.fbx';
-import fbxBase64 from '../assets/weapon/sk_primary_vortex_mesh.fbx';
-// import fbxBase64 from '../assets/weapon/sk_primary_vortex_anim_fp.fbx';
+import weaponFBXBase64 from '../assets/weapon/sk_primary_vortex_mesh.fbx';
+import weaponAnimFBXBase64 from '../assets/weapon/sk_primary_vortex_anim_fp.fbx';
 // import fbxBase64 from '../assets/target_dummy/sk_prop_dummy_mesh.fbx';
 
-// import fbxBase64 from '../assets/monkey_embedded_texture.fbx';
-import pngBase64 from '../assets/weapon/t_primary_vortex_basecolor.png';
-console.log({ fbxBase64 });
+import weaponPNGBase64 from '../assets/weapon/t_primary_vortex_basecolor.png';
+import { AssetLoader } from './classes/AssetLoader';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -30,55 +28,26 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(10, 10, 10);
 scene.add(directionalLight);
 
-// Helper: convert base64 string to ArrayBuffer for FBXLoader.parse
-function base64ToArrayBuffer(base64) {
-  const binaryString = atob(base64.split(',')[1]);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
+const assetLoader = new AssetLoader();
+assetLoader.loadCompleteCallback = () => {
+  const weaponObj = assetLoader.getFBX('weapon');
+  const weaponTexture = assetLoader.getTexture('weaponTexture');
 
-const manager = new THREE.LoadingManager();
-manager.setURLModifier((url) => {
-  if (url.endsWith('.tga')) {
-    console.warn('Blocked FBX texture:', url);
-    return ''; // return empty string to block load
-  }
-  return url;
-});
+  weaponObj.traverse((child) => {
+    if (child.isMesh) {
+      child.material.map = weaponTexture;
+      child.material.needsUpdate = true;
+    }
+  });
 
-const loader = new FBXLoader(manager);
+  weaponObj.rotation.y += Math.PI * 0.5;
+  weaponObj.scale.set(0.1, 0.1, 0.1);
 
-const arrayBuffer = base64ToArrayBuffer(fbxBase64);
-console.log({ arrayBuffer });
-
-const object = loader.parse(arrayBuffer);
-
-const texture = new THREE.TextureLoader().load(pngBase64);
-
-// Assign texture manually to all meshes
-object.traverse((child) => {
-  if (child.isMesh) {
-    child.material.map = texture;
-    child.material.needsUpdate = true;
-  }
-});
-
-object.rotation.y += Math.PI * 0.5;
-object.scale.set(0.1, 0.1, 0.1);
-
-scene.add(object);
-console.log({ object });
-
-// loader.load('/assets/weapon/sk_primary_vortex_mesh.fbx', (object) => {
-//   scene.add(object);
-//   console.log(object.scale);
-//   object.rotation.y += Math.PI * 0.5;
-//   object.scale.set(0.1, 0.1, 0.1);
-// });
+  scene.add(weaponObj);
+};
+assetLoader.loadFBX('weapon', weaponFBXBase64);
+assetLoader.loadFBX('weaponAnim', weaponAnimFBXBase64);
+assetLoader.loadTexture('weaponTexture', weaponPNGBase64);
 
 function animate() {
   requestAnimationFrame(animate);
