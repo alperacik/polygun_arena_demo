@@ -31,8 +31,8 @@ export class AssetLoader {
 
   loadFBX(key, base64) {
     const arrayBuffer = base64ToArrayBuffer(base64);
-    const object = this.fbxLoader.parse(arrayBuffer);
-    this.fbxLoadedMap.set(key, object);
+    const obj = this.fbxLoader.parse(arrayBuffer);
+    this.fbxLoadedMap.set(key, obj);
   }
 
   getFBX(key) {

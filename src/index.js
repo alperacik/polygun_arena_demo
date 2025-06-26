@@ -1,15 +1,17 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
 
 // Import FBX and PNG as base64 strings
-// import fbxBase64 from '../assets/character/sk_char_sergeant_arms_fp.fbx';
-import weaponFBXBase64 from '../assets/weapon/sk_primary_vortex_mesh.fbx';
-import weaponAnimFBXBase64 from '../assets/weapon/sk_primary_vortex_anim_fp.fbx';
+import mergedFBXBase64 from '../assets/sk_vortex_without_animation_merged.fbx';
+import mergedAnimFBXBase64 from '../assets/sk_vortex_only_animation_merged.fbx';
 // import fbxBase64 from '../assets/target_dummy/sk_prop_dummy_mesh.fbx';
 
-import weaponPNGBase64 from '../assets/weapon/t_primary_vortex_basecolor.png';
 import { AssetLoader } from './classes/AssetLoader';
+import { detectFPS } from './helpers/utils';
 
+const clock = new THREE.Clock();
 const scene = new THREE.Scene();
+scene.background = new THREE.Color().setRGB(0.5, 0.7, 0.5);
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
@@ -30,30 +32,47 @@ scene.add(directionalLight);
 
 const assetLoader = new AssetLoader();
 assetLoader.loadCompleteCallback = () => {
-  const weaponObj = assetLoader.getFBX('weapon');
-  const weaponTexture = assetLoader.getTexture('weaponTexture');
+  const mergedObj = assetLoader.getFBX('mergedFBXBase64');
+  const mergedAnimObj = assetLoader.getFBX('mergedAnimFBXBase64');
+  console.log({ mergedAnimObj });
 
-  weaponObj.traverse((child) => {
-    if (child.isMesh) {
-      child.material.map = weaponTexture;
-      child.material.needsUpdate = true;
-    }
-  });
+  mergedObj.rotation.y += Math.PI;
+  mergedObj.position.y -= 23;
+  mergedObj.position.x -= 1;
+  mergedObj.position.z += 2;
+  const scale = 0.15;
+  mergedObj.scale.set(scale, scale, scale);
 
-  weaponObj.rotation.y += Math.PI * 0.5;
-  weaponObj.scale.set(0.1, 0.1, 0.1);
+  const weaponMixer = new THREE.AnimationMixer(mergedObj);
+  const clip = mergedAnimObj.animations[0];
+  console.log(clip);
+  const fps = clip.frameRate ?? detectFPS(clip);
+  console.log(fps);
+  const deployClip = THREE.AnimationUtils.subclip(clip, 'Deploy', 0, 29, fps);
+  const idleClip = THREE.AnimationUtils.subclip(clip, 'Idle', 30, 31, fps);
+  const fireClip = THREE.AnimationUtils.subclip(clip, 'Fire', 32, 56, fps);
+  const reloadClip = THREE.AnimationUtils.subclip(clip, 'Reload', 58, 127, fps);
+  if (clip) {
+    const action = weaponMixer.clipAction(idleClip);
+    action.play();
+  }
 
-  scene.add(weaponObj);
+  scene.add(mergedObj);
+
+  // Use orbit controls to inspect the scene
+  // const controls = new OrbitControls(camera, renderer.domElement);
+  // controls.update();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const delta = clock.getDelta();
+    if (weaponMixer) weaponMixer.update(delta);
+    renderer.render(scene, camera);
+  }
+  animate();
 };
-assetLoader.loadFBX('weapon', weaponFBXBase64);
-assetLoader.loadFBX('weaponAnim', weaponAnimFBXBase64);
-assetLoader.loadTexture('weaponTexture', weaponPNGBase64);
-
-function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
-}
-animate();
+assetLoader.loadFBX('mergedFBXBase64', mergedFBXBase64);
+assetLoader.loadFBX('mergedAnimFBXBase64', mergedAnimFBXBase64);
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;

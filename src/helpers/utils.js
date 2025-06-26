@@ -7,3 +7,10 @@ export function base64ToArrayBuffer(base64) {
   }
   return bytes.buffer;
 }
+
+export function detectFPS(clip) {
+  const t = clip.tracks.find((tr) => tr.times.length > 1);
+  if (!t) return 30; // safe fallback
+  const dt = t.times[1] - t.times[0];
+  return Math.round(1 / dt); // → fps
+}
