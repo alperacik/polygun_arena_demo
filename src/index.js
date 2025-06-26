@@ -11,18 +11,24 @@ import { detectFPS } from './helpers/utils';
 import { Joystick } from './classes/Joystick';
 
 let enableDebug = false;
+const X_AXIS_VECTOR = new THREE.Vector3(1, 0, 0);
+const Y_AXIS_VECTOR = new THREE.Vector3(0, 1, 0);
+const Z_AXIS_VECTOR = new THREE.Vector3(0, 0, 1);
 
 const clock = new THREE.Clock();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color().setRGB(0.5, 0.7, 0.5);
+
+const player = new THREE.Object3D(); // Player container (holds cam & weapon)
+scene.add(player);
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
 );
-camera.position.set(0, 2, 5);
-scene.add(camera);
+camera.position.set(0, 20, 0); // height of eyes from ground
+player.add(camera);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -34,12 +40,16 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(10, 10, 10);
 scene.add(directionalLight);
 
-// Create a cube
-const geometry = new THREE.BoxGeometry();
-const material = new THREE.MeshNormalMaterial();
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
-cube.position.set(0, 0, -5); // 5 units in front of the camera
+// Plane geometry and material
+const geometry = new THREE.PlaneGeometry(100, 100); // width, height
+const material = new THREE.MeshBasicMaterial({
+  color: 0xffff00,
+  side: THREE.FrontSide,
+});
+const ground = new THREE.Mesh(geometry, material);
+ground.rotateOnAxis(X_AXIS_VECTOR, -Math.PI * 0.5);
+
+scene.add(ground);
 
 let controls;
 let mergedObj;
@@ -51,16 +61,15 @@ assetLoader.loadCompleteCallback = () => {
   const mergedAnimObj = assetLoader.getFBX('mergedAnimFBXBase64');
   console.log({ mergedAnimObj });
 
-  mergedObj.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI); // y axis
-  mergedObj.rotateOnAxis(new THREE.Vector3(1, 0, 0), -Math.PI * 0.01); // x axis
-  mergedObj.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI * 0.1); // z axis
+  mergedObj.rotateOnAxis(Y_AXIS_VECTOR, Math.PI); // y axis
+  mergedObj.rotateOnAxis(X_AXIS_VECTOR, -Math.PI * 0.01); // x axis
+  mergedObj.rotateOnAxis(Z_AXIS_VECTOR, Math.PI * 0.1); // z axis
   mergedObj.position.y -= 24.5;
   mergedObj.position.x -= 6;
   mergedObj.position.z -= 3;
   const scale = 0.15;
   mergedObj.scale.set(scale, scale, scale);
 
-  const playerGroup = new THREE.Group();
   const weaponMixer = new THREE.AnimationMixer(mergedObj);
   const clip = mergedAnimObj.animations[0];
   console.log(clip);
@@ -75,8 +84,7 @@ assetLoader.loadCompleteCallback = () => {
     action.play();
   }
 
-  playerGroup.add(mergedObj);
-  camera.add(playerGroup);
+  camera.add(mergedObj);
 
   // Use orbit controls to inspect the scene
   let fpsHelper;
@@ -87,23 +95,35 @@ assetLoader.loadCompleteCallback = () => {
     scene.add(fpsHelper);
   }
 
+  const rotation = { yaw: 0, pitch: 0 }; // camera rotation state
   function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
     if (weaponMixer) weaponMixer.update(delta);
-    const moveSpeed = 0.1;
+
+    // ROTATION: right joystick controls yaw/pitch
+    rotation.yaw -= rotateJoystick.joystickInput.x * delta * 2; // rotate horizontally
+    rotation.pitch -= rotateJoystick.joystickInput.y * delta * 2; // rotate vertically
+    rotation.pitch = Math.max(
+      -Math.PI / 2,
+      Math.min(Math.PI / 2, rotation.pitch)
+    ); // clamp
+
+    // Rotation: based on invisible joystick (right)
+    player.rotation.y = rotation.yaw;
+    camera.rotation.x = rotation.pitch;
+    const moveSpeed = 10;
     // Movement: based on joystick (left)
-    const move = new THREE.Vector3(
+    const dir = new THREE.Vector3(
       moveJoystick.joystickInput.x,
       0,
       moveJoystick.joystickInput.y
     );
-    move.normalize().multiplyScalar(moveSpeed);
-    camera.position.add(move);
-
-    // Rotation: based on invisible joystick (right)
-    camera.rotation.y -= rotateJoystick.joystickInput.x * 0.02; // horizontal drag
-    camera.rotation.x -= rotateJoystick.joystickInput.y * 0.02; // vertical drag
+    if (dir.lengthSq() > 0) {
+      dir.normalize().applyAxisAngle(Y_AXIS_VECTOR, rotation.yaw);
+      dir.multiplyScalar(moveSpeed * delta);
+      player.position.add(dir);
+    }
 
     // update your game logic, controls, joysticks …
     if (enableDebug) {
