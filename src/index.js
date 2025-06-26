@@ -8,6 +8,7 @@ import mergedAnimFBXBase64 from '../assets/sk_vortex_only_animation_merged.fbx';
 
 import { AssetLoader } from './classes/AssetLoader';
 import { detectFPS } from './helpers/utils';
+import { Joystick } from './classes/Joystick';
 
 const clock = new THREE.Clock();
 const scene = new THREE.Scene();
@@ -30,6 +31,13 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(10, 10, 10);
 scene.add(directionalLight);
 
+// Create a cube
+const geometry = new THREE.BoxGeometry();
+const material = new THREE.MeshNormalMaterial();
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+
+const moveJoystick = new Joystick();
 const assetLoader = new AssetLoader();
 assetLoader.loadCompleteCallback = () => {
   const mergedObj = assetLoader.getFBX('mergedFBXBase64');
@@ -43,6 +51,7 @@ assetLoader.loadCompleteCallback = () => {
   const scale = 0.15;
   mergedObj.scale.set(scale, scale, scale);
 
+  const playerGroup = new THREE.Group();
   const weaponMixer = new THREE.AnimationMixer(mergedObj);
   const clip = mergedAnimObj.animations[0];
   console.log(clip);
@@ -57,7 +66,9 @@ assetLoader.loadCompleteCallback = () => {
     action.play();
   }
 
-  scene.add(mergedObj);
+  playerGroup.add(mergedObj);
+  playerGroup.add(camera);
+  scene.add(playerGroup);
 
   // Use orbit controls to inspect the scene
   // const controls = new OrbitControls(camera, renderer.domElement);
@@ -67,6 +78,17 @@ assetLoader.loadCompleteCallback = () => {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
     if (weaponMixer) weaponMixer.update(delta);
+    const speed = 0.1;
+    // Move the player or camera group
+    const moveDir = new THREE.Vector3();
+    // Forward/backward (z)
+    moveDir.z = moveJoystick.joystickInput.y;
+    // Left/right (x)
+    moveDir.x = moveJoystick.joystickInput.x;
+    // Apply to a group
+    moveDir.normalize().multiplyScalar(speed);
+
+    playerGroup.position.add(moveDir);
     renderer.render(scene, camera);
   }
   animate();
@@ -78,4 +100,5 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  moveJoystick.resize();
 });
