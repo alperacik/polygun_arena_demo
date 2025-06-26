@@ -10,6 +10,8 @@ import { AssetLoader } from './classes/AssetLoader';
 import { detectFPS } from './helpers/utils';
 import { Joystick } from './classes/Joystick';
 
+let enableDebug = false;
+
 const clock = new THREE.Clock();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color().setRGB(0.5, 0.7, 0.5);
@@ -20,6 +22,7 @@ const camera = new THREE.PerspectiveCamera(
   1000
 );
 camera.position.set(0, 2, 5);
+scene.add(camera);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -36,18 +39,24 @@ const geometry = new THREE.BoxGeometry();
 const material = new THREE.MeshNormalMaterial();
 const cube = new THREE.Mesh(geometry, material);
 scene.add(cube);
+cube.position.set(0, 0, -5); // 5 units in front of the camera
 
-const moveJoystick = new Joystick();
+let controls;
+let mergedObj;
+const moveJoystick = new Joystick(true);
+const rotateJoystick = new Joystick(false);
 const assetLoader = new AssetLoader();
 assetLoader.loadCompleteCallback = () => {
-  const mergedObj = assetLoader.getFBX('mergedFBXBase64');
+  mergedObj = assetLoader.getFBX('mergedFBXBase64');
   const mergedAnimObj = assetLoader.getFBX('mergedAnimFBXBase64');
   console.log({ mergedAnimObj });
 
-  mergedObj.rotation.y += Math.PI;
-  mergedObj.position.y -= 23;
-  mergedObj.position.x -= 1;
-  mergedObj.position.z += 2;
+  mergedObj.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI); // y axis
+  mergedObj.rotateOnAxis(new THREE.Vector3(1, 0, 0), -Math.PI * 0.01); // x axis
+  mergedObj.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI * 0.1); // z axis
+  mergedObj.position.y -= 24.5;
+  mergedObj.position.x -= 6;
+  mergedObj.position.z -= 3;
   const scale = 0.15;
   mergedObj.scale.set(scale, scale, scale);
 
@@ -67,28 +76,42 @@ assetLoader.loadCompleteCallback = () => {
   }
 
   playerGroup.add(mergedObj);
-  playerGroup.add(camera);
-  scene.add(playerGroup);
+  camera.add(playerGroup);
 
   // Use orbit controls to inspect the scene
-  // const controls = new OrbitControls(camera, renderer.domElement);
-  // controls.update();
+  let fpsHelper;
+  if (enableDebug) {
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.update();
+    fpsHelper = new THREE.CameraHelper(camera);
+    scene.add(fpsHelper);
+  }
 
   function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
     if (weaponMixer) weaponMixer.update(delta);
-    const speed = 0.1;
-    // Move the player or camera group
-    const moveDir = new THREE.Vector3();
-    // Forward/backward (z)
-    moveDir.z = moveJoystick.joystickInput.y;
-    // Left/right (x)
-    moveDir.x = moveJoystick.joystickInput.x;
-    // Apply to a group
-    moveDir.normalize().multiplyScalar(speed);
+    const moveSpeed = 0.1;
+    // Movement: based on joystick (left)
+    const move = new THREE.Vector3(
+      moveJoystick.joystickInput.x,
+      0,
+      moveJoystick.joystickInput.y
+    );
+    move.normalize().multiplyScalar(moveSpeed);
+    camera.position.add(move);
 
-    playerGroup.position.add(moveDir);
+    // Rotation: based on invisible joystick (right)
+    camera.rotation.y -= rotateJoystick.joystickInput.x * 0.02; // horizontal drag
+    camera.rotation.x -= rotateJoystick.joystickInput.y * 0.02; // vertical drag
+
+    // update your game logic, controls, joysticks …
+    if (enableDebug) {
+      controls.update();
+      fpsHelper.update();
+    }
+    // main FPS view
+    renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
     renderer.render(scene, camera);
   }
   animate();
@@ -99,6 +122,7 @@ assetLoader.loadFBX('mergedAnimFBXBase64', mergedAnimFBXBase64);
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+
   renderer.setSize(window.innerWidth, window.innerHeight);
   moveJoystick.resize();
 });
