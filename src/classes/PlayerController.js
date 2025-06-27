@@ -96,7 +96,29 @@ export class PlayerController {
 
       this.cameraHelper = new THREE.CameraHelper(this.camera);
       this.scene.add(this.cameraHelper);
+
+      // Add movement boundary visualization
+      this.createMovementBoundaryVisualization();
     }
+  }
+
+  createMovementBoundaryVisualization() {
+    const bounds = GAME_CONFIG.MOVEMENT_BOUNDS;
+    const geometry = new THREE.EdgesGeometry(
+      new THREE.BoxGeometry(
+        bounds.MAX_X - bounds.MIN_X,
+        0.1,
+        bounds.MAX_Z - bounds.MIN_Z
+      )
+    );
+    const material = new THREE.LineBasicMaterial({ color: 0xff0000 });
+    this.boundaryVisualization = new THREE.LineSegments(geometry, material);
+    this.boundaryVisualization.position.set(
+      (bounds.MAX_X + bounds.MIN_X) / 2,
+      0.05,
+      (bounds.MAX_Z + bounds.MIN_Z) / 2
+    );
+    this.scene.add(this.boundaryVisualization);
   }
 
   setupEventListeners() {
@@ -246,7 +268,22 @@ export class PlayerController {
     if (direction.lengthSq() > 0) {
       direction.normalize().applyAxisAngle(Y_AXIS_VECTOR, rotationState.yaw);
       direction.multiplyScalar(GAME_CONFIG.MOVE_SPEED * delta);
-      this.obj3D.position.add(direction);
+
+      // Calculate new position
+      const newPosition = this.obj3D.position.clone().add(direction);
+
+      // Apply movement boundaries
+      newPosition.x = Math.max(
+        GAME_CONFIG.MOVEMENT_BOUNDS.MIN_X,
+        Math.min(GAME_CONFIG.MOVEMENT_BOUNDS.MAX_X, newPosition.x)
+      );
+      newPosition.z = Math.max(
+        GAME_CONFIG.MOVEMENT_BOUNDS.MIN_Z,
+        Math.min(GAME_CONFIG.MOVEMENT_BOUNDS.MAX_Z, newPosition.z)
+      );
+
+      // Update position with boundaries applied
+      this.obj3D.position.copy(newPosition);
     }
 
     if (this.enableDebug) {
@@ -257,5 +294,21 @@ export class PlayerController {
 
   getCamera() {
     return this.camera;
+  }
+
+  getPosition() {
+    return this.obj3D.position.clone();
+  }
+
+  isAtBoundary() {
+    const pos = this.obj3D.position;
+    const bounds = GAME_CONFIG.MOVEMENT_BOUNDS;
+
+    return {
+      atXMin: Math.abs(pos.x - bounds.MIN_X) < 0.1,
+      atXMax: Math.abs(pos.x - bounds.MAX_X) < 0.1,
+      atZMin: Math.abs(pos.z - bounds.MIN_Z) < 0.1,
+      atZMax: Math.abs(pos.z - bounds.MAX_Z) < 0.1,
+    };
   }
 }

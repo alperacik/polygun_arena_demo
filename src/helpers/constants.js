@@ -8,7 +8,7 @@ export const CENTER = new THREE.Vector2(0, 0);
 // Game configuration
 export const GAME_CONFIG = {
   MAX_MAG_AMMO: 10,
-  MOVE_SPEED: 10,
+  MOVE_SPEED: 50,
   ROTATION_SPEED: 2,
   TARGET_COUNT: 10,
   TARGET_HP: 5,
@@ -26,6 +26,13 @@ export const GAME_CONFIG = {
   WEAPON_Y_ROTATION: Math.PI * 1.05,
   WEAPON_X_ROTATION: -Math.PI * 0.02,
   PITCH_CLAMP: Math.PI / 2,
+  // Movement boundaries (half of GROUND_SIZE to keep player within the ground)
+  MOVEMENT_BOUNDS: {
+    MIN_X: -50,
+    MAX_X: 50,
+    MIN_Z: -50,
+    MAX_Z: 50,
+  },
 };
 
 // Joystick configuration
