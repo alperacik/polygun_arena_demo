@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/Addons.js';
 // Import FBX and PNG as base64 strings
 import mergedFBXBase64 from '../assets/sk_vortex_without_animation_merged.fbx';
 import mergedAnimFBXBase64 from '../assets/sk_vortex_only_animation_merged.fbx';
-// import fbxBase64 from '../assets/target_dummy/sk_prop_dummy_mesh.fbx';
+import dummyTargetFBXBase64 from '../assets/target_dummy/sk_prop_dummy_mesh.fbx';
 
 import { AssetLoader } from './classes/AssetLoader';
 import { detectFPS } from './helpers/utils';
@@ -59,7 +59,6 @@ const assetLoader = new AssetLoader();
 assetLoader.loadCompleteCallback = () => {
   mergedObj = assetLoader.getFBX('mergedFBXBase64');
   const mergedAnimObj = assetLoader.getFBX('mergedAnimFBXBase64');
-  console.log({ mergedAnimObj });
 
   mergedObj.rotateOnAxis(Y_AXIS_VECTOR, Math.PI); // y axis
   mergedObj.rotateOnAxis(X_AXIS_VECTOR, -Math.PI * 0.01); // x axis
@@ -83,7 +82,6 @@ assetLoader.loadCompleteCallback = () => {
     const action = weaponMixer.clipAction(idleClip);
     action.play();
   }
-
   camera.add(mergedObj);
 
   // Use orbit controls to inspect the scene
@@ -95,11 +93,32 @@ assetLoader.loadCompleteCallback = () => {
     scene.add(fpsHelper);
   }
 
+  const dummyTargetObjExample = assetLoader.getFBX('dummyTargetFBXBase64');
+  dummyTargetObjExample.scale.set(0.15, 0.15, 0.15);
+  scene.add(dummyTargetObjExample);
+
+  const raycaster = new THREE.Raycaster();
+  const center = new THREE.Vector2(0, 0);
   const rotation = { yaw: 0, pitch: 0 }; // camera rotation state
   function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
     if (weaponMixer) weaponMixer.update(delta);
+
+    raycaster.setFromCamera(center, camera);
+    const intersects = raycaster.intersectObjects(
+      [dummyTargetObjExample],
+      true
+    );
+
+    if (intersects.length > 0) {
+      const firstHit = intersects[0];
+      console.log(
+        'Hit:',
+        firstHit.object.name || firstHit.object,
+        firstHit.point
+      );
+    }
 
     // ROTATION: right joystick controls yaw/pitch
     rotation.yaw -= rotateJoystick.joystickInput.x * delta * 2; // rotate horizontally
@@ -138,6 +157,7 @@ assetLoader.loadCompleteCallback = () => {
 };
 assetLoader.loadFBX('mergedFBXBase64', mergedFBXBase64);
 assetLoader.loadFBX('mergedAnimFBXBase64', mergedAnimFBXBase64);
+assetLoader.loadFBX('dummyTargetFBXBase64', dummyTargetFBXBase64);
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
