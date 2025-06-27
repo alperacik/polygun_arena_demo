@@ -22,7 +22,9 @@ export class GameUIOverlay {
 
   setupEventListeners() {
     this.eventBus.on(GAME_OVER_EVENT_NAME, () => {
-      this.showGameOverOverlay();
+      setTimeout(() => {
+        this.showGameOverOverlay();
+      }, 500);
     });
   }
 

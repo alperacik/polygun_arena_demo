@@ -7,11 +7,11 @@ export const CENTER = new THREE.Vector2(0, 0);
 
 // Game configuration
 export const GAME_CONFIG = {
-  MAX_MAG_AMMO: 10,
+  MAX_MAG_AMMO: 7,
   MOVE_SPEED: 50,
   ROTATION_SPEED: 2,
   TARGET_COUNT: 10,
-  TARGET_HP: 5,
+  TARGET_HP: 4,
   TARGET_SPACING: 10,
   TARGET_SCALE: 0.08,
   TARGET_POSITION: { x: -45, y: 0, z: -50 },
@@ -68,7 +68,11 @@ export const ANIMATION_CONFIG = {
     FIRE: { name: 'fire', start: 32, end: 56 },
     RELOAD: { name: 'reload', start: 58, end: 127 },
   },
-  DEFAULT_FPS: 30,
+  TARGET_ELIMINATION: {
+    DURATION: 1.0, // Animation duration in seconds
+    ROTATION_X: -Math.PI / 2, // Rotate 90 degrees around X-axis (fall backwards)
+    EASING: 'easeOutCubic', // Easing function type
+  },
 };
 
 // Colors

@@ -82,6 +82,7 @@ export class GameManager {
     const delta = this.game.getClock().getDelta();
 
     this.playerController.updateMixer(delta);
+    this.targetController.updateAnimations(delta);
     const camera = this.playerController.getCamera();
     // Render the scene
     this.renderer.render(this.game.getScene(), camera);
