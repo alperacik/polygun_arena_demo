@@ -1,5 +1,8 @@
+import { GAME_OVER_EVENT_NAME } from '../helpers/EventNames';
+
 export class Joystick {
-  constructor(isVisible) {
+  constructor(eventBus, isVisible) {
+    this.eventBus = eventBus;
     this.isVisible = isVisible;
     const shortEdge = Math.min(window.innerWidth, window.innerHeight);
     const baseSize = shortEdge * 0.14;
@@ -35,6 +38,10 @@ export class Joystick {
     window.addEventListener('pointerup', this.onUp.bind(this));
     // todo for mobile input
     //  window.addEventListener('touchend', this.onUp.bind(this));
+
+    this.eventBus.on(GAME_OVER_EVENT_NAME, () => {
+      this.onUp();
+    });
   }
 
   initVisibleJoystick(baseSize, stickSize) {

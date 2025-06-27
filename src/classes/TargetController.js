@@ -1,9 +1,11 @@
 import * as THREE from 'three';
 import { SkeletonUtils } from 'three/examples/jsm/Addons.js';
+import { PLAY_AGAIN_EVENT_NAME } from '../helpers/EventNames';
 
 export class TargetController {
-  constructor(scene, targetObj, count) {
+  constructor(scene, targetObj, count, eventBus) {
     this.scene = scene;
+    this.eventBus = eventBus;
 
     const scale = 0.08;
     const hp = 5;
@@ -18,6 +20,13 @@ export class TargetController {
       this.scene.add(target);
       this.targets.push(target);
     }
+
+    this.eventBus.on(PLAY_AGAIN_EVENT_NAME, () => {
+      this.targets.forEach((target) => {
+        target.visible = true;
+        target.userData.hp = hp;
+      });
+    });
   }
 
   getTargets() {

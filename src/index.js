@@ -5,14 +5,33 @@ import mergedFBXBase64 from '../assets/sk_vortex_without_animation_merged.fbx';
 import mergedAnimFBXBase64 from '../assets/sk_vortex_only_animation_merged.fbx';
 import dummyTargetFBXBase64 from '../assets/target_dummy/sk_prop_dummy_mesh.fbx';
 
+import { EventBus } from './classes/EventBus';
 import { AssetLoader } from './classes/AssetLoader';
 import { Joystick } from './classes/Joystick';
 import { CENTER, X_AXIS_VECTOR } from './helpers/constants';
 import { PlayerController } from './classes/PlayerController';
 import { TargetController } from './classes/TargetController';
+import { GameUIOverlay } from './classes/GameUIOverlay';
+import {
+  GAME_OVER_EVENT_NAME,
+  PLAY_AGAIN_EVENT_NAME,
+} from './helpers/EventNames';
 
 let isGameOver = false;
 let enableDebug = false;
+
+const androidAppLink =
+  'https://play.google.com/store/apps/details?id=com.polygon.arena&hl=en';
+const iosAppLink =
+  'https://apps.apple.com/us/app/polygun-arena-online-shooter/id64510407809';
+const rotationState = { yaw: 0, pitch: 0 };
+const eventBus = new EventBus();
+eventBus.on(PLAY_AGAIN_EVENT_NAME, () => {
+  isGameOver = false;
+  rotationState.yaw = 0;
+  rotationState.pitch = 0;
+});
+const gameUIOverlay = new GameUIOverlay(eventBus, androidAppLink, iosAppLink);
 
 // raycaster
 const raycaster = new THREE.Raycaster();
@@ -27,6 +46,7 @@ scene.background = new THREE.Color().setRGB(0.5, 0.7, 0.5);
 // renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
 document.body.appendChild(renderer.domElement);
 
 // lights
@@ -48,8 +68,8 @@ ground.rotateOnAxis(X_AXIS_VECTOR, -Math.PI * 0.5);
 scene.add(ground);
 
 // joysticks
-const moveJoystick = new Joystick(true);
-const rotateJoystick = new Joystick(false);
+const moveJoystick = new Joystick(eventBus, true);
+const rotateJoystick = new Joystick(eventBus, false);
 
 // asset loader
 const assetLoader = new AssetLoader();
@@ -61,21 +81,23 @@ assetLoader.loadCompleteCallback = () => {
     assetLoader.getFBX('mergedAnimFBXBase64'),
     enableDebug,
     renderer,
-    raycaster
+    raycaster,
+    eventBus
   );
 
   const targetController = new TargetController(
     scene,
     assetLoader.getFBX('dummyTargetFBXBase64'),
-    10
+    10,
+    eventBus
   );
 
-  const rotationState = { yaw: 0, pitch: 0 };
   function animate() {
     requestAnimationFrame(animate);
+    const delta = clock.getDelta();
+    playerController.updateMixer(delta);
     if (isGameOver) return;
     const camera = playerController.getCamera();
-    const delta = clock.getDelta();
 
     // ROTATION: right joystick controls yaw/pitch
     rotationState.yaw -= rotateJoystick.joystickInput.x * delta * 2; // rotate horizontally
@@ -107,9 +129,10 @@ assetLoader.loadCompleteCallback = () => {
         if (firstHit.object.parent.visible) {
           isGameOver = targetController.onHit(firstHit.object.parent);
           if (isGameOver) {
-            // todo playagain & download buttons
+            eventBus.emit(GAME_OVER_EVENT_NAME);
           }
           playerController.fireWeapon();
+          gameUIOverlay.showHitMarker();
         }
       }
     }

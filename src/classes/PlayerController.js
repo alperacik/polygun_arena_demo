@@ -2,6 +2,10 @@ import * as THREE from 'three';
 import { X_AXIS_VECTOR, Y_AXIS_VECTOR } from '../helpers/constants';
 import { detectFPS } from '../helpers/utils';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import {
+  GAME_OVER_EVENT_NAME,
+  PLAY_AGAIN_EVENT_NAME,
+} from '../helpers/EventNames';
 
 const MAX_MAG_AMMO = 10;
 const MOVE_SPEED = 10;
@@ -18,6 +22,8 @@ export class PlayerController {
    * @param {*} weaponAnimObj
    * @param {*} enableDebug
    * @param {*} renderer
+   * @param {*} raycaster
+   * @param {*} eventBus
    */
   constructor(
     scene,
@@ -25,11 +31,13 @@ export class PlayerController {
     weaponAnimObj,
     enableDebug,
     renderer,
-    raycaster
+    raycaster,
+    eventBus
   ) {
     this.enableDebug = enableDebug;
     this.renderer = renderer;
     this.raycaster = raycaster;
+    this.eventBus = eventBus;
     this.scene = scene;
 
     this.obj3D = new THREE.Object3D(); // Player container (holds cam & weapon)
@@ -117,7 +125,37 @@ export class PlayerController {
       },
       false
     );
-    this.createCrosshair();
+
+    this.initialData = {
+      weaponObjPosition: this.weaponObj.position.clone(),
+      weaponObjRotation: this.weaponObj.rotation.clone(),
+      obj3DPosition: this.obj3D.position.clone(),
+      obj3DRotation: this.obj3D.rotation.clone(),
+      cameraPosition: this.camera.position.clone(),
+      cameraRotation: this.camera.rotation.clone(),
+    };
+
+    this.eventBus.on(GAME_OVER_EVENT_NAME, () => {
+      this.rotationState = { yaw: 0, pitch: 0 };
+      this.canFire = false;
+    });
+    this.eventBus.on(PLAY_AGAIN_EVENT_NAME, () => {
+      this.obj3D.position.copy(this.initialData.obj3DPosition);
+      this.obj3D.rotation.copy(this.initialData.obj3DRotation);
+      this.camera.position.copy(this.initialData.cameraPosition);
+      this.camera.rotation.copy(this.initialData.cameraRotation);
+      this.weaponObj.position.copy(this.initialData.weaponObjPosition);
+      this.weaponObj.rotation.copy(this.initialData.weaponObjRotation);
+      this.magAmmo = MAX_MAG_AMMO;
+      this.playWeaponAnim(
+        WEAPON_DEPLOY_ACTION_NAME,
+        () => {
+          this.canFire = true;
+          this.playWeaponAnim(WEAPON_IDLE_ACTION_NAME, null, true);
+        },
+        false
+      );
+    });
   }
 
   isWeaponReady() {
@@ -156,7 +194,6 @@ export class PlayerController {
     this.magAmmo--;
     console.log('ammo', this.magAmmo);
     this.canFire = false;
-    this.showHitMarker();
     this.playWeaponAnim(
       WEAPON_FIRE_ACTION_NAME,
       () => {
@@ -179,9 +216,11 @@ export class PlayerController {
     );
   }
 
-  update(direction, rotationState, delta) {
+  updateMixer(delta) {
     if (this.weaponMixer) this.weaponMixer.update(delta);
+  }
 
+  update(direction, rotationState, delta) {
     this.obj3D.rotation.y = rotationState.yaw;
     this.camera.rotation.x = rotationState.pitch;
 
@@ -199,80 +238,5 @@ export class PlayerController {
 
   getCamera() {
     return this.camera;
-  }
-
-  createCrosshair() {
-    // Create crosshair container
-    const crosshair = document.createElement('div');
-    crosshair.style.position = 'fixed';
-    crosshair.style.top = '50%';
-    crosshair.style.left = '50%';
-    crosshair.style.width = '2vh';
-    crosshair.style.height = '2vh';
-    crosshair.style.transform = 'translate(-50%, -50%)';
-    crosshair.style.pointerEvents = 'none';
-    crosshair.style.zIndex = '9999';
-
-    // Create horizontal and vertical lines for main crosshair
-    const hLine = document.createElement('div');
-    hLine.style.position = 'absolute';
-    hLine.style.width = '100%';
-    hLine.style.height = '0.2vh';
-    hLine.style.background = 'red';
-    hLine.style.top = 'calc(50% - 0.1vh)';
-    hLine.style.left = '0';
-
-    const vLine = document.createElement('div');
-    vLine.style.position = 'absolute';
-    vLine.style.width = '0.2vh';
-    vLine.style.height = '100%';
-    vLine.style.background = 'red';
-    vLine.style.left = 'calc(50% - 0.1vh)';
-    vLine.style.top = '0';
-
-    crosshair.appendChild(hLine);
-    crosshair.appendChild(vLine);
-    document.body.appendChild(crosshair);
-
-    // Create hit marker container (on top of crosshair)
-    this.hitMarker = document.createElement('div');
-    this.hitMarker.style.position = 'fixed';
-    this.hitMarker.style.top = '50%';
-    this.hitMarker.style.left = '50%';
-    this.hitMarker.style.width = '4vh';
-    this.hitMarker.style.height = '4vh';
-    this.hitMarker.style.transform = 'translate(-50%, -50%)';
-    this.hitMarker.style.pointerEvents = 'none';
-    this.hitMarker.style.zIndex = '10000';
-    this.hitMarker.style.opacity = '0';
-    this.hitMarker.style.transition = 'opacity 0.3s ease-out';
-
-    // todo adjust visual
-    // Create 4 lines for the hit marker (forming an X shape)
-    const lines = [];
-    for (let i = 0; i < 4; i++) {
-      const line = document.createElement('div');
-      line.style.position = 'absolute';
-      line.style.width = '2vh';
-      line.style.height = '0.2vh';
-      line.style.background = 'yellow';
-      line.style.top = i < 2 ? '0' : 'calc(100% - 0.2vh)';
-      line.style.left = i % 2 === 0 ? '0' : 'calc(100% - 2vh)';
-      line.style.transformOrigin = 'center';
-      // line.style.transform = i % 2 === 0 ? 'rotate(45deg)' : 'rotate(-45deg)';
-      line.style.transform =
-        i === 0 || i === 3 ? 'rotate(45deg)' : 'rotate(-45deg)';
-      this.hitMarker.appendChild(line);
-      lines.push(line);
-    }
-
-    document.body.appendChild(this.hitMarker);
-  }
-
-  showHitMarker() {
-    this.hitMarker.style.opacity = '1';
-    setTimeout(() => {
-      this.hitMarker.style.opacity = '0';
-    }, 300);
   }
 }
