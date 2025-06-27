@@ -26,12 +26,12 @@ export class TargetController {
 
   onHit(target) {
     let hp = target.userData.hp;
-    if (hp < 1) return;
+    if (hp < 1) return false;
     hp--;
     target.userData.hp = hp;
     if (hp < 1) {
       target.visible = false;
-      if (this.checkAllTargetsEliminated()) return true; // game over
+      return this.checkAllTargetsEliminated(); // game over
     }
   }
 

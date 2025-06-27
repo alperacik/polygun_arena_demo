@@ -95,17 +95,22 @@ assetLoader.loadCompleteCallback = () => {
     playerController.update(direction, rotationState, delta);
 
     // check hit
-    raycaster.setFromCamera(CENTER, camera);
-    const intersects = raycaster.intersectObjects(
-      targetController.getTargets(),
-      true
-    );
+    if (playerController.isWeaponReady()) {
+      raycaster.setFromCamera(CENTER, camera);
+      const intersects = raycaster.intersectObjects(
+        targetController.getTargets(),
+        true
+      );
 
-    if (intersects.length > 0) {
-      const firstHit = intersects[0];
-      isGameOver = targetController.onHit(firstHit.object.parent);
-      if (isGameOver) {
-        // todo playagain & download buttons
+      if (intersects.length > 0) {
+        const firstHit = intersects[0];
+        if (firstHit.object.parent.visible) {
+          isGameOver = targetController.onHit(firstHit.object.parent);
+          if (isGameOver) {
+            // todo playagain & download buttons
+          }
+          playerController.fireWeapon();
+        }
       }
     }
 

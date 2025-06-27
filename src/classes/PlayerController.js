@@ -1,17 +1,14 @@
 import * as THREE from 'three';
-import {
-  X_AXIS_VECTOR,
-  Y_AXIS_VECTOR,
-  Z_AXIS_VECTOR,
-} from '../helpers/constants';
+import { X_AXIS_VECTOR, Y_AXIS_VECTOR } from '../helpers/constants';
 import { detectFPS } from '../helpers/utils';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 
+const MAX_MAG_AMMO = 10;
 const MOVE_SPEED = 10;
-const WEAPON_DEPLOY_CLIP_NAME = 'deploy';
-const WEAPON_IDLE_CLIP_NAME = 'idle';
-const WEAPON_FIRE_CLIP_NAME = 'fire';
-const WEAPON_RELOAD_CLIP_NAME = 'reload';
+const WEAPON_DEPLOY_ACTION_NAME = 'deploy';
+const WEAPON_IDLE_ACTION_NAME = 'idle';
+const WEAPON_FIRE_ACTION_NAME = 'fire';
+const WEAPON_RELOAD_ACTION_NAME = 'reload';
 
 export class PlayerController {
   /**
@@ -50,50 +47,50 @@ export class PlayerController {
 
     // weapon obj
     this.weaponObj = weaponObj;
-    this.weaponObj.rotateOnAxis(Y_AXIS_VECTOR, Math.PI); // y axis
-    this.weaponObj.rotateOnAxis(X_AXIS_VECTOR, -Math.PI * 0.12); // x axis
-    this.weaponObj.rotateOnAxis(Z_AXIS_VECTOR, Math.PI * 0.12); // z axis
-    this.weaponObj.position.y -= 20.5;
-    this.weaponObj.position.x -= 6;
-    this.weaponObj.position.z -= 8;
+    this.weaponObj.rotateOnAxis(Y_AXIS_VECTOR, Math.PI * 1.05); // y axis
+    this.weaponObj.rotateOnAxis(X_AXIS_VECTOR, -Math.PI * 0.02); // x axis
+    this.weaponObj.position.y -= 24.5;
+    this.weaponObj.position.z -= 2.5;
     const weaponObjScale = 0.15;
     this.weaponObj.scale.set(weaponObjScale, weaponObjScale, weaponObjScale);
     this.camera.add(this.weaponObj);
 
     // weapon anims
+    this.currentWeaponActionName = '';
     this.weaponMixer = new THREE.AnimationMixer(this.weaponObj);
     const weaponClip = weaponAnimObj.animations[0];
     const weaponClipFPS = weaponClip.frameRate ?? detectFPS(weaponClip);
-    this.weaponSubClips = {
-      WEAPON_DEPLOY_CLIP_NAME: THREE.AnimationUtils.subclip(
-        weaponClip,
-        'Deploy',
-        0,
-        29,
-        weaponClipFPS
-      ),
-      WEAPON_IDLE_CLIP_NAME: THREE.AnimationUtils.subclip(
-        weaponClip,
-        'Idle',
-        30,
-        31,
-        weaponClipFPS
-      ),
-      WEAPON_FIRE_CLIP_NAME: THREE.AnimationUtils.subclip(
-        weaponClip,
-        'Fire',
-        32,
-        56,
-        weaponClipFPS
-      ),
-      WEAPON_RELOAD_CLIP_NAME: THREE.AnimationUtils.subclip(
-        weaponClip,
-        'Reload',
-        58,
-        127,
-        weaponClipFPS
-      ),
-    };
+    this.weaponActionsMap = new Map();
+    this.weaponActionsMap.set(
+      WEAPON_DEPLOY_ACTION_NAME,
+      this.weaponMixer.clipAction(
+        THREE.AnimationUtils.subclip(weaponClip, 'Deploy', 0, 29, weaponClipFPS)
+      )
+    );
+    this.weaponActionsMap.set(
+      WEAPON_IDLE_ACTION_NAME,
+      this.weaponMixer.clipAction(
+        THREE.AnimationUtils.subclip(weaponClip, 'Idle', 30, 31, weaponClipFPS)
+      )
+    );
+    this.weaponActionsMap.set(
+      WEAPON_FIRE_ACTION_NAME,
+      this.weaponMixer.clipAction(
+        THREE.AnimationUtils.subclip(weaponClip, 'Fire', 32, 56, weaponClipFPS)
+      )
+    );
+    this.weaponActionsMap.set(
+      WEAPON_RELOAD_ACTION_NAME,
+      this.weaponMixer.clipAction(
+        THREE.AnimationUtils.subclip(
+          weaponClip,
+          'Reload',
+          58,
+          127,
+          weaponClipFPS
+        )
+      )
+    );
 
     if (this.enableDebug) {
       // control camera
@@ -108,13 +105,78 @@ export class PlayerController {
       this.scene.add(this.cameraHelper);
     }
 
-    // todo
-    //     if (clip) {
-    //     const action = weaponMixer.clipAction(idleClip);
-    //     action.play();
-    //   }
-
     this.rotationState = { yaw: 0, pitch: 0 };
+
+    this.canFire = false;
+    this.magAmmo = MAX_MAG_AMMO;
+    this.playWeaponAnim(
+      WEAPON_DEPLOY_ACTION_NAME,
+      () => {
+        this.canFire = true;
+        this.playWeaponAnim(WEAPON_IDLE_ACTION_NAME, null, true);
+      },
+      false
+    );
+    this.createCrosshair();
+  }
+
+  isWeaponReady() {
+    return this.canFire && this.magAmmo > 0;
+  }
+
+  playWeaponAnim(actionName, onCompleteCallback = null, loop = true) {
+    const action = this.weaponActionsMap.get(actionName);
+    console.log(actionName);
+
+    if (this.currentWeaponActionName === actionName) {
+      return;
+    }
+
+    this.currentWeaponActionName = actionName;
+    if (onCompleteCallback) {
+      const onCompleteCallbackWrapper = () => {
+        onCompleteCallback();
+        this.weaponMixer.removeEventListener(
+          'finished',
+          onCompleteCallbackWrapper
+        );
+      };
+      this.weaponMixer.addEventListener('finished', onCompleteCallbackWrapper);
+    }
+    action
+      .reset()
+      .setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1)
+      .play();
+    if (!loop) {
+      action.clampWhenFinished = true;
+    }
+  }
+
+  fireWeapon() {
+    this.magAmmo--;
+    console.log('ammo', this.magAmmo);
+    this.canFire = false;
+    this.showHitMarker();
+    this.playWeaponAnim(
+      WEAPON_FIRE_ACTION_NAME,
+      () => {
+        if (this.magAmmo > 0) {
+          this.canFire = true;
+          this.playWeaponAnim(WEAPON_IDLE_ACTION_NAME, null, true);
+        } else {
+          this.playWeaponAnim(
+            WEAPON_RELOAD_ACTION_NAME,
+            () => {
+              this.magAmmo = MAX_MAG_AMMO;
+              this.canFire = true;
+              this.playWeaponAnim(WEAPON_IDLE_ACTION_NAME, null, true);
+            },
+            false
+          );
+        }
+      },
+      false
+    );
   }
 
   update(direction, rotationState, delta) {
@@ -137,5 +199,80 @@ export class PlayerController {
 
   getCamera() {
     return this.camera;
+  }
+
+  createCrosshair() {
+    // Create crosshair container
+    const crosshair = document.createElement('div');
+    crosshair.style.position = 'fixed';
+    crosshair.style.top = '50%';
+    crosshair.style.left = '50%';
+    crosshair.style.width = '2vh';
+    crosshair.style.height = '2vh';
+    crosshair.style.transform = 'translate(-50%, -50%)';
+    crosshair.style.pointerEvents = 'none';
+    crosshair.style.zIndex = '9999';
+
+    // Create horizontal and vertical lines for main crosshair
+    const hLine = document.createElement('div');
+    hLine.style.position = 'absolute';
+    hLine.style.width = '100%';
+    hLine.style.height = '0.2vh';
+    hLine.style.background = 'red';
+    hLine.style.top = 'calc(50% - 0.1vh)';
+    hLine.style.left = '0';
+
+    const vLine = document.createElement('div');
+    vLine.style.position = 'absolute';
+    vLine.style.width = '0.2vh';
+    vLine.style.height = '100%';
+    vLine.style.background = 'red';
+    vLine.style.left = 'calc(50% - 0.1vh)';
+    vLine.style.top = '0';
+
+    crosshair.appendChild(hLine);
+    crosshair.appendChild(vLine);
+    document.body.appendChild(crosshair);
+
+    // Create hit marker container (on top of crosshair)
+    this.hitMarker = document.createElement('div');
+    this.hitMarker.style.position = 'fixed';
+    this.hitMarker.style.top = '50%';
+    this.hitMarker.style.left = '50%';
+    this.hitMarker.style.width = '4vh';
+    this.hitMarker.style.height = '4vh';
+    this.hitMarker.style.transform = 'translate(-50%, -50%)';
+    this.hitMarker.style.pointerEvents = 'none';
+    this.hitMarker.style.zIndex = '10000';
+    this.hitMarker.style.opacity = '0';
+    this.hitMarker.style.transition = 'opacity 0.3s ease-out';
+
+    // todo adjust visual
+    // Create 4 lines for the hit marker (forming an X shape)
+    const lines = [];
+    for (let i = 0; i < 4; i++) {
+      const line = document.createElement('div');
+      line.style.position = 'absolute';
+      line.style.width = '2vh';
+      line.style.height = '0.2vh';
+      line.style.background = 'yellow';
+      line.style.top = i < 2 ? '0' : 'calc(100% - 0.2vh)';
+      line.style.left = i % 2 === 0 ? '0' : 'calc(100% - 2vh)';
+      line.style.transformOrigin = 'center';
+      // line.style.transform = i % 2 === 0 ? 'rotate(45deg)' : 'rotate(-45deg)';
+      line.style.transform =
+        i === 0 || i === 3 ? 'rotate(45deg)' : 'rotate(-45deg)';
+      this.hitMarker.appendChild(line);
+      lines.push(line);
+    }
+
+    document.body.appendChild(this.hitMarker);
+  }
+
+  showHitMarker() {
+    this.hitMarker.style.opacity = '1';
+    setTimeout(() => {
+      this.hitMarker.style.opacity = '0';
+    }, 300);
   }
 }
