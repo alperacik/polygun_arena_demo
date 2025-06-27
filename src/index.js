@@ -7,9 +7,11 @@ import dummyTargetFBXBase64 from '../assets/target_dummy/sk_prop_dummy_mesh.fbx'
 
 import { AssetLoader } from './classes/AssetLoader';
 import { Joystick } from './classes/Joystick';
-import { X_AXIS_VECTOR } from './helpers/constants';
+import { CENTER, X_AXIS_VECTOR } from './helpers/constants';
 import { PlayerController } from './classes/PlayerController';
+import { TargetController } from './classes/TargetController';
 
+let isGameOver = false;
 let enableDebug = false;
 
 // raycaster
@@ -62,15 +64,17 @@ assetLoader.loadCompleteCallback = () => {
     raycaster
   );
 
-  const dummyTargetObjExample = assetLoader.getFBX('dummyTargetFBXBase64');
-  dummyTargetObjExample.scale.set(0.15, 0.15, 0.15);
-  scene.add(dummyTargetObjExample);
-
-  playerController.setTargets([dummyTargetObjExample]);
+  const targetController = new TargetController(
+    scene,
+    assetLoader.getFBX('dummyTargetFBXBase64'),
+    10
+  );
 
   const rotationState = { yaw: 0, pitch: 0 };
   function animate() {
     requestAnimationFrame(animate);
+    if (isGameOver) return;
+    const camera = playerController.getCamera();
     const delta = clock.getDelta();
 
     // ROTATION: right joystick controls yaw/pitch
@@ -90,9 +94,24 @@ assetLoader.loadCompleteCallback = () => {
 
     playerController.update(direction, rotationState, delta);
 
+    // check hit
+    raycaster.setFromCamera(CENTER, camera);
+    const intersects = raycaster.intersectObjects(
+      targetController.getTargets(),
+      true
+    );
+
+    if (intersects.length > 0) {
+      const firstHit = intersects[0];
+      isGameOver = targetController.onHit(firstHit.object.parent);
+      if (isGameOver) {
+        // todo playagain & download buttons
+      }
+    }
+
     // main FPS view
     renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
-    renderer.render(scene, playerController.getCamera());
+    renderer.render(scene, camera);
   }
   animate();
 };

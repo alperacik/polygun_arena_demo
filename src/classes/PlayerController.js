@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import {
-  CENTER,
   X_AXIS_VECTOR,
   Y_AXIS_VECTOR,
   Z_AXIS_VECTOR,
@@ -121,18 +120,6 @@ export class PlayerController {
   update(direction, rotationState, delta) {
     if (this.weaponMixer) this.weaponMixer.update(delta);
 
-    this.raycaster.setFromCamera(CENTER, this.camera);
-    const intersects = this.raycaster.intersectObjects(this.targets, true);
-
-    if (intersects.length > 0) {
-      const firstHit = intersects[0];
-      console.log(
-        'Hit:',
-        firstHit.object.name || firstHit.object,
-        firstHit.point
-      );
-    }
-
     this.obj3D.rotation.y = rotationState.yaw;
     this.camera.rotation.x = rotationState.pitch;
 
@@ -146,10 +133,6 @@ export class PlayerController {
       this.orbitControls.update();
       this.cameraHelper.update();
     }
-  }
-
-  setTargets(arr) {
-    this.targets = arr;
   }
 
   getCamera() {
