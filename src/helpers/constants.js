@@ -25,7 +25,7 @@ export const GAME_CONFIG = {
   WEAPON_Z_OFFSET: -2.5,
   WEAPON_Y_ROTATION: Math.PI * 1.05,
   WEAPON_X_ROTATION: -Math.PI * 0.02,
-  PITCH_CLAMP: Math.PI / 2,
+  PITCH_CLAMP: Math.PI / 4,
   // Movement boundaries (half of GROUND_SIZE to keep player within the ground)
   MOVEMENT_BOUNDS: {
     MIN_X: -50,
