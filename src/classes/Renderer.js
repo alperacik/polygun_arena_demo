@@ -9,7 +9,8 @@ export class Renderer {
   setupRenderer() {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    // this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setPixelRatio(1); // For mobile devices, it is better for performance to set pixel ratio to 1
     document.body.appendChild(this.renderer.domElement);
   }
 
