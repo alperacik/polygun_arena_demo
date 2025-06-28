@@ -27,6 +27,8 @@ export const GAME_CONFIG = {
   WEAPON_X_ROTATION: -Math.PI * 0.02,
   PITCH_CLAMP: Math.PI * 0.1,
   KILL_COUNT_TO_WIN: 10, // Number of kills needed to win the game
+  // Player initial position
+  PLAYER_INITIAL_POSITION: { x: 0, y: 0, z: 40 },
   // Movement boundaries (half of GROUND_SIZE to keep player within the ground)
   MOVEMENT_BOUNDS: {
     MIN_X: -50,

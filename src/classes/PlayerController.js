@@ -39,6 +39,11 @@ export class PlayerController {
 
   setupPlayer() {
     this.obj3D = new THREE.Object3D(); // Player container (holds cam & weapon)
+    this.obj3D.position.set(
+      GAME_CONFIG.PLAYER_INITIAL_POSITION.x,
+      GAME_CONFIG.PLAYER_INITIAL_POSITION.y,
+      GAME_CONFIG.PLAYER_INITIAL_POSITION.z
+    );
     this.scene.add(this.obj3D);
 
     // camera
