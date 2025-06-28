@@ -90,7 +90,7 @@ export class GameManager {
     if (this.game.isGameOver) return;
 
     // Update rotation based on right joystick
-    this.game.updateRotation(this.rotateJoystick.joystickInput, delta);
+    this.game.updateRotation(this.rotateJoystick.joystickInput);
 
     // Update movement based on left joystick
     const direction = new THREE.Vector3(

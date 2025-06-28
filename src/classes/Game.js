@@ -61,11 +61,9 @@ export class Game {
     this.rotationState.pitch = 0;
   }
 
-  updateRotation(joystickInput, delta) {
-    this.rotationState.yaw -=
-      joystickInput.x * delta * GAME_CONFIG.ROTATION_SPEED;
-    this.rotationState.pitch -=
-      joystickInput.y * delta * GAME_CONFIG.ROTATION_SPEED;
+  updateRotation(joystickInput) {
+    this.rotationState.yaw -= joystickInput.x * GAME_CONFIG.ROTATION_SPEED;
+    this.rotationState.pitch -= joystickInput.y * GAME_CONFIG.ROTATION_SPEED;
     this.rotationState.pitch = Math.max(
       -GAME_CONFIG.PITCH_CLAMP,
       Math.min(GAME_CONFIG.PITCH_CLAMP, this.rotationState.pitch)

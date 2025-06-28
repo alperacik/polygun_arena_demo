@@ -238,6 +238,9 @@ export class Joystick {
 
     if (this.isVisible) {
       this.updateStickPosition(offsetX, offsetY);
+    } else {
+      // prevent joystick from moving when not visible
+      this.origin = { x: clientX, y: clientY };
     }
   }
 
