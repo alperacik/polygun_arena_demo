@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GAME_CONFIG } from '../helpers/constants';
+import { CURRENT_TARGET_CONFIG } from '../helpers/constants';
 import { Game } from './Game';
 import { Renderer } from './Renderer';
 import { PlayerController } from './PlayerController';
@@ -60,8 +60,9 @@ export class GameManager {
     this.targetController = new TargetController(
       this.game.getScene(),
       this.assetLoader.getFBX('dummyTargetFBXBase64'),
-      GAME_CONFIG.TARGET_COUNT,
-      this.eventBus
+      CURRENT_TARGET_CONFIG.count,
+      this.eventBus,
+      CURRENT_TARGET_CONFIG
     );
 
     this.game.setPlayerController(this.playerController);

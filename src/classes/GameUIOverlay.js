@@ -3,6 +3,7 @@ import {
   PLAY_AGAIN_EVENT_NAME,
   KILL_COUNT_UPDATE_EVENT_NAME,
   SHOOTING_EVENT_NAME,
+  TARGET_CONFIG_CHANGED_EVENT_NAME,
 } from '../helpers/EventNames';
 import {
   UI_CONFIG,
@@ -42,6 +43,15 @@ export class GameUIOverlay {
     this.eventBus.on(SHOOTING_EVENT_NAME, () => {
       console.log('Shooting event received in GameUIOverlay!');
       this.animateCrosshairSpread();
+    });
+
+    // Listen for target configuration changes
+    this.eventBus.on(TARGET_CONFIG_CHANGED_EVENT_NAME, (data) => {
+      console.log(
+        `Target configuration changed to: ${data.configName} (${data.targetCount} targets)`
+      );
+      // Update the kill counter display to reflect new target count
+      this.updateKillCounterDisplay();
     });
   }
 
@@ -296,7 +306,8 @@ export class GameUIOverlay {
   }
 
   updateKillCounter(killCount) {
-    this.killCounter.textContent = `Kills: ${killCount}/${getEffectiveKillCountToWin()}`;
+    this.currentKillCount = killCount;
+    this.updateKillCounterDisplay();
 
     // Add a brief highlight effect when kill count increases
     this.killCounter.style.backgroundColor = 'rgba(255, 215, 0, 0.8)';
@@ -305,6 +316,12 @@ export class GameUIOverlay {
       this.killCounter.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
       this.killCounter.style.color = '#fff';
     }, 200);
+  }
+
+  updateKillCounterDisplay() {
+    const currentKillCount = this.currentKillCount || 0;
+    const effectiveKillCountToWin = getEffectiveKillCountToWin();
+    this.killCounter.textContent = `Kills: ${currentKillCount}/${effectiveKillCountToWin}`;
   }
 
   // ==== Game Over Overlay ====

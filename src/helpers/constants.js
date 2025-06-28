@@ -15,7 +15,7 @@ export const GAME_CONFIG = {
   TARGET_SPACING: 10,
   TARGET_SCALE: 0.08,
   TARGET_POSITION: { x: -45, y: 0, z: -50 },
-  GROUND_SIZE: 100,
+  GROUND_SIZE: 200,
   CAMERA_HEIGHT: 20,
   CAMERA_FOV: 75,
   CAMERA_NEAR: 0.1,
@@ -38,11 +38,138 @@ export const GAME_CONFIG = {
   },
 };
 
+// Target configuration presets
+export const TARGET_CONFIGS = {
+  // Default linear arrangement
+  LINEAR: {
+    name: 'Linear',
+    layout: 'linear',
+    count: 10,
+    spacing: 10,
+    basePosition: { x: -45, y: 0, z: -50 },
+    scale: 0.08,
+    hp: 4,
+  },
+
+  // Circular arrangement
+  CIRCULAR: {
+    name: 'Circular',
+    layout: 'circular',
+    count: 8,
+    radius: 30,
+    centerPosition: { x: 0, y: 0, z: -50 },
+    scale: 0.08,
+    hp: 3,
+    startAngle: 0, // Starting angle in radians
+  },
+
+  // Grid arrangement
+  GRID: {
+    name: 'Grid',
+    layout: 'grid',
+    rows: 3,
+    cols: 4,
+    spacing: { x: 12, z: 12 },
+    basePosition: { x: -30, y: 0, z: -50 },
+    scale: 0.08,
+    hp: 5,
+  },
+
+  // V-shaped formation
+  V_FORMATION: {
+    name: 'V Formation',
+    layout: 'v_formation',
+    count: 7,
+    angle: Math.PI / 3, // 60 degrees
+    basePosition: { x: 0, y: 0, z: -50 },
+    spacing: 8,
+    scale: 0.08,
+    hp: 4,
+  },
+
+  // Random scattered positions
+  SCATTERED: {
+    name: 'Scattered',
+    layout: 'scattered',
+    count: 12,
+    bounds: {
+      minX: -40,
+      maxX: 40,
+      minZ: -60,
+      maxZ: -30,
+      y: 0,
+    },
+    scale: 0.08,
+    hp: 3,
+    minDistance: 8, // Minimum distance between targets
+  },
+
+  // Pyramid formation
+  PYRAMID: {
+    name: 'Pyramid',
+    layout: 'pyramid',
+    baseCount: 5, // Targets in bottom row
+    rows: 3,
+    spacing: { x: 10, z: 10 },
+    basePosition: { x: -20, y: 0, z: -50 },
+    scale: 0.08,
+    hp: 4,
+  },
+
+  // Moving targets (for future implementation)
+  MOVING: {
+    name: 'Moving Targets',
+    layout: 'moving',
+    count: 6,
+    basePosition: { x: -30, y: 0, z: -50 },
+    spacing: 12,
+    scale: 0.08,
+    hp: 3,
+    movement: {
+      enabled: true,
+      amplitude: 5,
+      speed: 2,
+      axis: 'x', // 'x', 'z', or 'both'
+    },
+  },
+};
+
+// Current target configuration (change this to switch layouts)
+export const CURRENT_TARGET_CONFIG = TARGET_CONFIGS.LINEAR;
+
+// Utility function to switch target configurations
+export const switchTargetConfig = (configName) => {
+  const config = TARGET_CONFIGS[configName.toUpperCase()];
+  if (!config) {
+    console.warn(
+      `Target configuration "${configName}" not found. Available:`,
+      Object.keys(TARGET_CONFIGS)
+    );
+    return TARGET_CONFIGS.LINEAR;
+  }
+  return config;
+};
+
 // Computed effective kill count (ensures game is always winnable)
-// If TARGET_COUNT is lower than KILL_COUNT_TO_WIN, we use TARGET_COUNT
-// to prevent impossible win conditions
+// Uses the current target configuration count instead of the old GAME_CONFIG.TARGET_COUNT
 export const getEffectiveKillCountToWin = () => {
-  return Math.min(GAME_CONFIG.TARGET_COUNT, GAME_CONFIG.KILL_COUNT_TO_WIN);
+  let currentTargetCount;
+
+  // Handle special case for grid layout
+  if (CURRENT_TARGET_CONFIG.layout === 'grid') {
+    currentTargetCount =
+      CURRENT_TARGET_CONFIG.rows * CURRENT_TARGET_CONFIG.cols;
+  } else if (CURRENT_TARGET_CONFIG.layout === 'pyramid') {
+    // Calculate pyramid count based on baseCount and rows
+    currentTargetCount = 0;
+    for (let row = 0; row < CURRENT_TARGET_CONFIG.rows; row++) {
+      currentTargetCount += CURRENT_TARGET_CONFIG.baseCount - row;
+    }
+  } else {
+    currentTargetCount = CURRENT_TARGET_CONFIG.count;
+  }
+
+  return Math.min(currentTargetCount, GAME_CONFIG.KILL_COUNT_TO_WIN);
 };
 
 // Joystick configuration

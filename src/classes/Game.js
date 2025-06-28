@@ -9,6 +9,7 @@ import {
   GAME_OVER_EVENT_NAME,
   PLAY_AGAIN_EVENT_NAME,
   KILL_COUNT_UPDATE_EVENT_NAME,
+  TARGET_CONFIG_CHANGED_EVENT_NAME,
 } from '../helpers/EventNames';
 
 export class Game {
@@ -85,6 +86,15 @@ export class Game {
   setupEventListeners() {
     this.eventBus.on(PLAY_AGAIN_EVENT_NAME, () => {
       this.resetGame();
+      this.playerController.resetToInitialState();
+      this.targetController.resetTargets();
+    });
+
+    // Listen for target configuration changes
+    this.eventBus.on(TARGET_CONFIG_CHANGED_EVENT_NAME, () => {
+      // Reset kill count when target configuration changes
+      this.killCount = 0;
+      this.eventBus.emit(KILL_COUNT_UPDATE_EVENT_NAME, this.killCount);
     });
   }
 
