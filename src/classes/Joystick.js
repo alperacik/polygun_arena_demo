@@ -1,4 +1,7 @@
-import { GAME_OVER_EVENT_NAME } from '../helpers/EventNames';
+import {
+  GAME_OVER_EVENT_NAME,
+  PLAY_AGAIN_EVENT_NAME,
+} from '../helpers/EventNames';
 import { JOYSTICK_CONFIG, COLORS } from '../helpers/constants';
 
 export class Joystick {
@@ -49,8 +52,15 @@ export class Joystick {
     this.resizeHandler = this.handleResize.bind(this);
     window.addEventListener('resize', this.resizeHandler);
 
+    this.isGameOver = false;
+
     this.eventBus.on(GAME_OVER_EVENT_NAME, () => {
+      this.isGameOver = true;
       this.resetJoystick();
+    });
+
+    this.eventBus.on(PLAY_AGAIN_EVENT_NAME, () => {
+      this.isGameOver = false;
     });
   }
 
@@ -198,6 +208,8 @@ export class Joystick {
 
   // Shared method for starting joystick interaction
   startJoystick(clientX, clientY) {
+    if (this.isGameOver) return;
+
     if (this.isVisible) {
       if (clientX > window.innerWidth / 2) return; // Only left half allowed
     } else {
@@ -224,6 +236,8 @@ export class Joystick {
 
   // Shared method for updating joystick position
   updateJoystickPosition(clientX, clientY) {
+    if (this.isGameOver) return;
+
     const dx = clientX - this.origin.x;
     const dy = clientY - this.origin.y;
 
