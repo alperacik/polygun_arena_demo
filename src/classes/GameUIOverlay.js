@@ -2,6 +2,7 @@ import {
   GAME_OVER_EVENT_NAME,
   PLAY_AGAIN_EVENT_NAME,
   KILL_COUNT_UPDATE_EVENT_NAME,
+  SHOOTING_EVENT_NAME,
 } from '../helpers/EventNames';
 import {
   UI_CONFIG,
@@ -37,6 +38,11 @@ export class GameUIOverlay {
     this.eventBus.on(KILL_COUNT_UPDATE_EVENT_NAME, (killCount) => {
       this.updateKillCounter(killCount);
     });
+
+    this.eventBus.on(SHOOTING_EVENT_NAME, () => {
+      console.log('Shooting event received in GameUIOverlay!');
+      this.animateCrosshairSpread();
+    });
   }
 
   // ==== Crosshair ====
@@ -46,48 +52,167 @@ export class GameUIOverlay {
       position: 'fixed',
       top: '50%',
       left: '50%',
-      width: UI_CONFIG.CROSSHAIR_SIZE,
-      height: UI_CONFIG.CROSSHAIR_SIZE,
+      width: '6vh',
+      height: '6vh',
       transform: 'translate(-50%, -50%)',
       pointerEvents: 'none',
       zIndex: '9999',
     });
 
-    const horizontalLine = this.createCrosshairLine('horizontal');
-    const verticalLine = this.createCrosshairLine('vertical');
+    // Create center dot
+    const centerDot = this.createCrosshairDot();
 
-    this.crosshair.appendChild(horizontalLine);
-    this.crosshair.appendChild(verticalLine);
+    // Create 4 lines extending from center
+    this.topLine = this.createCrosshairLine('top');
+    this.bottomLine = this.createCrosshairLine('bottom');
+    this.leftLine = this.createCrosshairLine('left');
+    this.rightLine = this.createCrosshairLine('right');
+
+    this.crosshair.appendChild(centerDot);
+    this.crosshair.appendChild(this.topLine);
+    this.crosshair.appendChild(this.bottomLine);
+    this.crosshair.appendChild(this.leftLine);
+    this.crosshair.appendChild(this.rightLine);
     document.body.appendChild(this.crosshair);
   }
 
-  createCrosshairLine(orientation) {
+  createCrosshairDot() {
+    const dot = document.createElement('div');
+    Object.assign(dot.style, {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      width: '0.4vh',
+      height: '0.4vh',
+      background: COLORS.CROSSHAIR,
+      borderRadius: '50%',
+      transform: 'translate(-50%, -50%)',
+    });
+    return dot;
+  }
+
+  createCrosshairLine(direction) {
     const line = document.createElement('div');
-    const isHorizontal = orientation === 'horizontal';
+    const lineLength = '1.2vh'; // Shorter lines for more padding
+    const lineGap = '0.8vh'; // Gap from center dot
 
     Object.assign(line.style, {
       position: 'absolute',
       background: COLORS.CROSSHAIR,
-      transform: isHorizontal ? 'translateY(-50%)' : 'translateX(-50%)',
     });
 
-    if (isHorizontal) {
-      Object.assign(line.style, {
-        top: '50%',
-        left: '0',
-        width: '100%',
-        height: UI_CONFIG.CROSSHAIR_THICKNESS,
-      });
-    } else {
-      Object.assign(line.style, {
-        top: '0',
-        left: '50%',
-        width: UI_CONFIG.CROSSHAIR_THICKNESS,
-        height: '100%',
-      });
+    switch (direction) {
+      case 'top':
+        Object.assign(line.style, {
+          top: '50%',
+          left: '50%',
+          width: UI_CONFIG.CROSSHAIR_THICKNESS,
+          height: lineLength,
+          transform: `translate(-50%, calc(-100% - ${lineGap}))`,
+        });
+        break;
+      case 'bottom':
+        Object.assign(line.style, {
+          top: '50%',
+          left: '50%',
+          width: UI_CONFIG.CROSSHAIR_THICKNESS,
+          height: lineLength,
+          transform: `translate(-50%, ${lineGap})`,
+        });
+        break;
+      case 'left':
+        Object.assign(line.style, {
+          top: '50%',
+          left: '50%',
+          width: lineLength,
+          height: UI_CONFIG.CROSSHAIR_THICKNESS,
+          transform: `translate(calc(-100% - ${lineGap}), -50%)`,
+        });
+        break;
+      case 'right':
+        Object.assign(line.style, {
+          top: '50%',
+          left: '50%',
+          width: lineLength,
+          height: UI_CONFIG.CROSSHAIR_THICKNESS,
+          transform: `translate(${lineGap}, -50%)`,
+        });
+        break;
     }
 
     return line;
+  }
+
+  // ==== Crosshair Animation ====
+  animateCrosshairSpread() {
+    console.log('Crosshair spread animation triggered!');
+
+    const spreadDistance = 1.0; // Distance to move lines outward
+
+    // Animate crosshair movement (recoil effect)
+    this.animateCrosshairRecoil();
+
+    // Animate each line moving outward
+    this.animateLineMovement(
+      this.topLine,
+      'top',
+      '50%',
+      `calc(50% - ${spreadDistance}vh)`
+    );
+    this.animateLineMovement(
+      this.bottomLine,
+      'top',
+      '50%',
+      `calc(50% + ${spreadDistance}vh)`
+    );
+    this.animateLineMovement(
+      this.leftLine,
+      'left',
+      '50%',
+      `calc(50% - ${spreadDistance}vh)`
+    );
+    this.animateLineMovement(
+      this.rightLine,
+      'left',
+      '50%',
+      `calc(50% + ${spreadDistance}vh)`
+    );
+  }
+
+  animateCrosshairRecoil() {
+    // Store original transform
+    const originalTransform = this.crosshair.style.transform;
+
+    // Add recoil movement (move up and slightly back with scale)
+    this.crosshair.style.transition = 'transform 80ms ease-out';
+    this.crosshair.style.transform = 'translate(-50%, -52%) scale(1.15)';
+
+    // Reset after recoil
+    setTimeout(() => {
+      this.crosshair.style.transition = 'transform 120ms ease-in';
+      this.crosshair.style.transform = originalTransform;
+    }, 80);
+  }
+
+  animateLineMovement(line, position, fromPos, toPos) {
+    console.log(`Moving line ${position} from ${fromPos} to ${toPos}`);
+
+    // Set initial state
+    line.style[position] = fromPos;
+    line.style.transition = 'none';
+
+    // Force reflow
+    line.offsetHeight;
+
+    // Animate to spread position
+    line.style.transition = `${position} ${UI_CONFIG.CROSSHAIR_SPREAD_DURATION}ms ease-out`;
+    line.style[position] = toPos;
+
+    // Reset after animation
+    setTimeout(() => {
+      line.style.transition = `${position} ${UI_CONFIG.CROSSHAIR_SPREAD_DURATION}ms ease-in`;
+      line.style[position] = fromPos;
+    }, UI_CONFIG.CROSSHAIR_SPREAD_DURATION);
   }
 
   // ==== Hit Marker ====

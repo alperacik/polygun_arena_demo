@@ -55,6 +55,8 @@ export const JOYSTICK_CONFIG = {
 export const UI_CONFIG = {
   CROSSHAIR_SIZE: '2vh',
   CROSSHAIR_THICKNESS: '0.2vh',
+  CROSSHAIR_SPREAD_DURATION: 200, // Duration of spread animation in ms
+  CROSSHAIR_SPREAD_MULTIPLIER: 2.5, // How much the lines spread when shooting
   HIT_MARKER_SIZE: '6vh',
   HIT_MARKER_LINE_LENGTH: '2vh',
   HIT_MARKER_GAP: '1vh',

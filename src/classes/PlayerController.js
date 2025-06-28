@@ -10,6 +10,7 @@ import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import {
   GAME_OVER_EVENT_NAME,
   PLAY_AGAIN_EVENT_NAME,
+  SHOOTING_EVENT_NAME,
 } from '../helpers/EventNames';
 
 export class PlayerController {
@@ -226,6 +227,10 @@ export class PlayerController {
     this.magAmmo--;
     console.log('ammo', this.magAmmo);
     this.canFire = false;
+
+    // Emit shooting event for crosshair animation
+    console.log('Emitting shooting event...');
+    this.eventBus.emit(SHOOTING_EVENT_NAME);
 
     this.playWeaponAnim(
       ANIMATION_CONFIG.WEAPON_ACTIONS.FIRE.name,
