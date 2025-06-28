@@ -243,6 +243,9 @@ export class Joystick {
       this.origin = { x: clientX, y: clientY };
     }
   }
+  resetJoystickInput() {
+    this.joystickInput = { x: 0, y: 0 };
+  }
 
   showJoystick() {
     this.baseEl.style.left = `${this.origin.x}px`;

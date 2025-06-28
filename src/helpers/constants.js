@@ -9,7 +9,7 @@ export const CENTER = new THREE.Vector2(0, 0);
 export const GAME_CONFIG = {
   MAX_MAG_AMMO: 7,
   MOVE_SPEED: 50,
-  ROTATION_SPEED: 0.1,
+  ROTATION_SPEED: 10,
   TARGET_COUNT: 10,
   TARGET_HP: 4,
   TARGET_SPACING: 10,
