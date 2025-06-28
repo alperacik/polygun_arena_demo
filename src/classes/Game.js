@@ -45,12 +45,38 @@ export class Game {
   }
 
   setupGround() {
+    const size = 8;
+    const data = new Uint8Array(size * size * 4);
+
+    for (let i = 0; i < size * size; i++) {
+      const x = i % size;
+      const y = Math.floor(i / size);
+      const isEven = (x + y) % 2 === 0;
+
+      const offset = i * 4;
+      if (isEven) {
+        data[offset] = 170;
+        data[offset + 1] = 230;
+        data[offset + 2] = 170;
+      } else {
+        data[offset] = 0;
+        data[offset + 1] = 100;
+        data[offset + 2] = 255;
+      }
+      data[offset + 3] = 255;
+    }
+
+    const texture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+    texture.needsUpdate = true;
+
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      side: THREE.FrontSide,
+    });
+
     this.ground = new THREE.Mesh(
       new THREE.PlaneGeometry(GAME_CONFIG.GROUND_SIZE, GAME_CONFIG.GROUND_SIZE),
-      new THREE.MeshBasicMaterial({
-        color: COLORS.GROUND,
-        side: THREE.FrontSide,
-      })
+      material
     );
     this.ground.rotateOnAxis(X_AXIS_VECTOR, -Math.PI * 0.5);
     this.scene.add(this.ground);
