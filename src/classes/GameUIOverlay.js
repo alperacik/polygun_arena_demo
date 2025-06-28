@@ -255,6 +255,20 @@ export class GameUIOverlay {
     });
     btn.addEventListener('click', handler);
 
+    // Add touch events for mobile support
+    btn.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // Prevent default touch behavior
+      btn.style.backgroundColor = COLORS.BUTTON_HOVER;
+    });
+    btn.addEventListener('touchend', (e) => {
+      e.preventDefault(); // Prevent default touch behavior
+      btn.style.backgroundColor = COLORS.BUTTON_BACKGROUND;
+      handler(e);
+    });
+    btn.addEventListener('touchcancel', () => {
+      btn.style.backgroundColor = COLORS.BUTTON_BACKGROUND;
+    });
+
     return btn;
   }
 
