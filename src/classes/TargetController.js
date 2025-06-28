@@ -1,9 +1,6 @@
 import * as THREE from 'three';
 import { SkeletonUtils } from 'three/examples/jsm/Addons.js';
-import {
-  PLAY_AGAIN_EVENT_NAME,
-  GAME_OVER_EVENT_NAME,
-} from '../helpers/EventNames';
+import { PLAY_AGAIN_EVENT_NAME } from '../helpers/EventNames';
 import { GAME_CONFIG, ANIMATION_CONFIG } from '../helpers/constants';
 
 export class TargetController {
@@ -95,7 +92,7 @@ export class TargetController {
       target.userData.eliminated = true;
       // Start rotation animation instead of just hiding
       this.startTargetEliminationAnimation(target);
-      return this.checkAllTargetsEliminated();
+      return true; // Target was eliminated
     }
 
     return false;
@@ -111,7 +108,6 @@ export class TargetController {
   }
 
   updateAnimations(delta) {
-    let gameOverShouldEmit = false;
     this.targets.forEach((target) => {
       const animState = this.targetAnimations.get(target);
       if (animState && animState.isAnimating) {
@@ -122,10 +118,6 @@ export class TargetController {
           animState.isAnimating = false;
           target.rotation.copy(animState.targetRotation);
           target.visible = false; // Hide after animation
-          // After hiding, check if all are eliminated and all animations are done
-          if (this.shouldEmitGameOver()) {
-            gameOverShouldEmit = true;
-          }
         } else {
           // Interpolate rotation
           const t = animState.animationProgress;
@@ -150,21 +142,5 @@ export class TargetController {
         }
       }
     });
-    if (gameOverShouldEmit) {
-      this.eventBus.emit(GAME_OVER_EVENT_NAME);
-    }
-  }
-
-  shouldEmitGameOver() {
-    // All targets eliminated and no animation is running
-    return this.targets.every(
-      (target) =>
-        target.userData.eliminated &&
-        !this.targetAnimations.get(target)?.isAnimating
-    );
-  }
-
-  checkAllTargetsEliminated() {
-    return this.targets.every((target) => target.userData.eliminated);
   }
 }

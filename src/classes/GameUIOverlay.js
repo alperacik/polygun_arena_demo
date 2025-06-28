@@ -1,8 +1,14 @@
 import {
   GAME_OVER_EVENT_NAME,
   PLAY_AGAIN_EVENT_NAME,
+  KILL_COUNT_UPDATE_EVENT_NAME,
 } from '../helpers/EventNames';
-import { UI_CONFIG, COLORS, APP_LINKS } from '../helpers/constants';
+import {
+  UI_CONFIG,
+  COLORS,
+  APP_LINKS,
+  getEffectiveKillCountToWin,
+} from '../helpers/constants';
 
 export class GameUIOverlay {
   constructor(eventBus, androidAppLink, iosAppLink) {
@@ -12,6 +18,7 @@ export class GameUIOverlay {
 
     this.createCrosshair();
     this.createHitMarker();
+    this.createKillCounter();
     this.createOverlay();
     this.setupEventListeners();
 
@@ -25,6 +32,10 @@ export class GameUIOverlay {
       setTimeout(() => {
         this.showGameOverOverlay();
       }, 500);
+    });
+
+    this.eventBus.on(KILL_COUNT_UPDATE_EVENT_NAME, (killCount) => {
+      this.updateKillCounter(killCount);
     });
   }
 
@@ -133,6 +144,42 @@ export class GameUIOverlay {
     setTimeout(() => {
       this.hitMarker.style.opacity = '0';
     }, UI_CONFIG.HIT_MARKER_DURATION);
+  }
+
+  // ==== Kill Counter ====
+  createKillCounter() {
+    this.killCounter = document.createElement('div');
+    Object.assign(this.killCounter.style, {
+      position: 'fixed',
+      top: '2vh',
+      left: '2vh',
+      padding: '1vh 2vh',
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      color: '#fff',
+      fontSize: '2.5vh',
+      fontWeight: 'bold',
+      borderRadius: '1vh',
+      zIndex: '9998',
+      pointerEvents: 'none',
+      fontFamily: 'Arial, sans-serif',
+      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+      border: '2px solid rgba(255,255,255,0.3)',
+    });
+
+    this.killCounter.textContent = `Kills: 0/${getEffectiveKillCountToWin()}`;
+    document.body.appendChild(this.killCounter);
+  }
+
+  updateKillCounter(killCount) {
+    this.killCounter.textContent = `Kills: ${killCount}/${getEffectiveKillCountToWin()}`;
+
+    // Add a brief highlight effect when kill count increases
+    this.killCounter.style.backgroundColor = 'rgba(255, 215, 0, 0.8)';
+    this.killCounter.style.color = '#000';
+    setTimeout(() => {
+      this.killCounter.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+      this.killCounter.style.color = '#fff';
+    }, 200);
   }
 
   // ==== Game Over Overlay ====

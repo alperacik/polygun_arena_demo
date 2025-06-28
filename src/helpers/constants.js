@@ -26,6 +26,7 @@ export const GAME_CONFIG = {
   WEAPON_Y_ROTATION: Math.PI * 1.05,
   WEAPON_X_ROTATION: -Math.PI * 0.02,
   PITCH_CLAMP: Math.PI * 0.1,
+  KILL_COUNT_TO_WIN: 10, // Number of kills needed to win the game
   // Movement boundaries (half of GROUND_SIZE to keep player within the ground)
   MOVEMENT_BOUNDS: {
     MIN_X: -50,
@@ -33,6 +34,13 @@ export const GAME_CONFIG = {
     MIN_Z: -50,
     MAX_Z: 50,
   },
+};
+
+// Computed effective kill count (ensures game is always winnable)
+// If TARGET_COUNT is lower than KILL_COUNT_TO_WIN, we use TARGET_COUNT
+// to prevent impossible win conditions
+export const getEffectiveKillCountToWin = () => {
+  return Math.min(GAME_CONFIG.TARGET_COUNT, GAME_CONFIG.KILL_COUNT_TO_WIN);
 };
 
 // Joystick configuration

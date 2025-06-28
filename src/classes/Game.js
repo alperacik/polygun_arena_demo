@@ -1,8 +1,14 @@
 import * as THREE from 'three';
-import { GAME_CONFIG, COLORS, X_AXIS_VECTOR } from '../helpers/constants';
+import {
+  GAME_CONFIG,
+  COLORS,
+  X_AXIS_VECTOR,
+  getEffectiveKillCountToWin,
+} from '../helpers/constants';
 import {
   GAME_OVER_EVENT_NAME,
   PLAY_AGAIN_EVENT_NAME,
+  KILL_COUNT_UPDATE_EVENT_NAME,
 } from '../helpers/EventNames';
 
 export class Game {
@@ -12,6 +18,7 @@ export class Game {
     this.rotationState = { yaw: 0, pitch: 0 };
     this.clock = new THREE.Clock();
     this.raycaster = new THREE.Raycaster();
+    this.killCount = 0; // Track kill count
 
     this.setupScene();
     this.setupLights();
@@ -59,6 +66,8 @@ export class Game {
     this.isGameOver = false;
     this.rotationState.yaw = 0;
     this.rotationState.pitch = 0;
+    this.killCount = 0; // Reset kill count
+    this.eventBus.emit(KILL_COUNT_UPDATE_EVENT_NAME, this.killCount);
   }
 
   updateRotation(joystickInput) {
@@ -79,9 +88,18 @@ export class Game {
     if (intersects.length > 0) {
       const firstHit = intersects[0];
       if (firstHit.object.parent.visible) {
-        this.isGameOver = this.targetController.onHit(firstHit.object.parent);
-        if (this.isGameOver) {
-          this.eventBus.emit(GAME_OVER_EVENT_NAME);
+        const targetEliminated = this.targetController.onHit(
+          firstHit.object.parent
+        );
+        if (targetEliminated) {
+          this.killCount++; // Increment kill count
+          this.eventBus.emit(KILL_COUNT_UPDATE_EVENT_NAME, this.killCount);
+
+          // Check if kill count reached the effective win condition
+          if (this.killCount >= getEffectiveKillCountToWin()) {
+            this.isGameOver = true;
+            this.eventBus.emit(GAME_OVER_EVENT_NAME);
+          }
         }
         this.playerController.fireWeapon();
         return true; // Hit detected
@@ -116,5 +134,9 @@ export class Game {
 
   setGameOver(value) {
     this.isGameOver = value;
+  }
+
+  getKillCount() {
+    return this.killCount;
   }
 }
