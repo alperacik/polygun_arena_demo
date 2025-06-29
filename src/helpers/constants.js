@@ -2,19 +2,12 @@ import * as THREE from 'three';
 
 export const X_AXIS_VECTOR = new THREE.Vector3(1, 0, 0);
 export const Y_AXIS_VECTOR = new THREE.Vector3(0, 1, 0);
-export const Z_AXIS_VECTOR = new THREE.Vector3(0, 0, 1);
-export const CENTER = new THREE.Vector2(0, 0);
 
 // Game configuration
 export const GAME_CONFIG = {
   MAX_MAG_AMMO: 7,
   MOVE_SPEED: 50,
   ROTATION_SPEED: 10,
-  TARGET_COUNT: 10,
-  TARGET_HP: 4,
-  TARGET_SPACING: 10,
-  TARGET_SCALE: 0.08,
-  TARGET_POSITION: { x: -45, y: 0, z: -50 },
   GROUND_SIZE: 200,
   CAMERA_HEIGHT: 20,
   CAMERA_FOV: 75,
@@ -26,7 +19,7 @@ export const GAME_CONFIG = {
   WEAPON_Y_ROTATION: Math.PI * 1.05,
   WEAPON_X_ROTATION: -Math.PI * 0.02,
   PITCH_CLAMP: Math.PI * 0.1,
-  KILL_COUNT_TO_WIN: 10, // Number of kills needed to win the game
+  KILL_COUNT_TO_WIN: 20, // Number of kills needed to win the game
   // Player initial position
   PLAYER_INITIAL_POSITION: { x: 0, y: 0, z: 40 },
   // Movement boundaries (half of GROUND_SIZE to keep player within the ground)
@@ -67,8 +60,8 @@ export const TARGET_CONFIGS = {
   GRID: {
     name: 'Grid',
     layout: 'grid',
-    rows: 3,
-    cols: 4,
+    rows: 5,
+    cols: 7,
     spacing: { x: 12, z: 12 },
     basePosition: { x: -30, y: 0, z: -50 },
     scale: 0.08,
@@ -109,14 +102,14 @@ export const TARGET_CONFIGS = {
     name: 'Pyramid',
     layout: 'pyramid',
     baseCount: 5, // Targets in bottom row
-    rows: 3,
+    rows: 5,
     spacing: { x: 10, z: 10 },
-    basePosition: { x: -20, y: 0, z: -50 },
+    basePosition: { x: 0, y: 0, z: -50 },
     scale: 0.08,
     hp: 4,
   },
 
-  // Moving targets (for future implementation)
+  // Moving targets
   MOVING: {
     name: 'Moving Targets',
     layout: 'moving',
@@ -129,26 +122,13 @@ export const TARGET_CONFIGS = {
       enabled: true,
       amplitude: 5,
       speed: 2,
-      axis: 'x', // 'x', 'z', or 'both'
+      axis: 'both', // 'x', 'z', or 'both'
     },
   },
 };
 
 // Current target configuration (change this to switch layouts)
 export const CURRENT_TARGET_CONFIG = TARGET_CONFIGS.LINEAR;
-
-// Utility function to switch target configurations
-export const switchTargetConfig = (configName) => {
-  const config = TARGET_CONFIGS[configName.toUpperCase()];
-  if (!config) {
-    console.warn(
-      `Target configuration "${configName}" not found. Available:`,
-      Object.keys(TARGET_CONFIGS)
-    );
-    return TARGET_CONFIGS.LINEAR;
-  }
-  return config;
-};
 
 // Computed effective kill count (ensures game is always winnable)
 // Uses the current target configuration count instead of the old GAME_CONFIG.TARGET_COUNT
@@ -182,10 +162,8 @@ export const JOYSTICK_CONFIG = {
 
 // UI configuration
 export const UI_CONFIG = {
-  CROSSHAIR_SIZE: '2vh',
   CROSSHAIR_THICKNESS: '0.2vh',
   CROSSHAIR_SPREAD_DURATION: 200, // Duration of spread animation in ms
-  CROSSHAIR_SPREAD_MULTIPLIER: 2.5, // How much the lines spread when shooting
   HIT_MARKER_SIZE: '6vh',
   HIT_MARKER_LINE_LENGTH: '2vh',
   HIT_MARKER_GAP: '1vh',
@@ -210,13 +188,11 @@ export const ANIMATION_CONFIG = {
   TARGET_ELIMINATION: {
     DURATION: 1.0, // Animation duration in seconds
     ROTATION_X: -Math.PI / 2, // Rotate 90 degrees around X-axis (fall backwards)
-    EASING: 'easeOutCubic', // Easing function type
   },
 };
 
 // Colors
 export const COLORS = {
-  GROUND: 0xffff00,
   SCENE_BACKGROUND: { r: 0.5, g: 0.7, b: 0.5 },
   CROSSHAIR: 'red',
   HIT_MARKER: 'yellow',
