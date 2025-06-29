@@ -290,7 +290,6 @@ export class PlayerController {
    */
   playWeaponAnim(actionName, onCompleteCallback = null, loop = true) {
     const action = this.weaponActionsMap.get(actionName);
-    console.log(actionName);
 
     if (this.currentWeaponActionName === actionName) {
       return;
@@ -325,11 +324,9 @@ export class PlayerController {
    */
   fireWeapon() {
     this.magAmmo--;
-    console.log('ammo', this.magAmmo);
     this.canFire = false;
 
     // Emit shooting event for crosshair animation
-    console.log('Emitting shooting event...');
     this.eventBus.emit(SHOOTING_EVENT_NAME);
 
     this.playWeaponAnim(

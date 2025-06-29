@@ -67,15 +67,11 @@ export class GameUIOverlay {
     });
 
     this.eventBus.on(SHOOTING_EVENT_NAME, () => {
-      console.log('Shooting event received in GameUIOverlay!');
       this.animateCrosshairSpread();
     });
 
     // Listen for target configuration changes
-    this.eventBus.on(TARGET_CONFIG_CHANGED_EVENT_NAME, (data) => {
-      console.log(
-        `Target configuration changed to: ${data.configName} (${data.targetCount} targets)`
-      );
+    this.eventBus.on(TARGET_CONFIG_CHANGED_EVENT_NAME, () => {
       // Update the kill counter display to reflect new target count
       this.updateKillCounterDisplay();
     });
@@ -201,8 +197,6 @@ export class GameUIOverlay {
    * Triggers recoil animation and line movement animations
    */
   animateCrosshairSpread() {
-    console.log('Crosshair spread animation triggered!');
-
     const spreadDistance = 1.0; // Distance to move lines outward
 
     // Animate crosshair movement (recoil effect)
@@ -262,8 +256,6 @@ export class GameUIOverlay {
    * @param {string} toPos - Ending position value
    */
   animateLineMovement(line, position, fromPos, toPos) {
-    console.log(`Moving line ${position} from ${fromPos} to ${toPos}`);
-
     // Set initial state
     line.style[position] = fromPos;
     line.style.transition = 'none';

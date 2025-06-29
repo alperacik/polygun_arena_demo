@@ -73,7 +73,6 @@ export class Joystick {
    * Configures automatic input mode detection and game state handling
    */
   setupEventListeners() {
-    // Remove console.log statements
     this.handlePointerDown = this.handlePointerDown.bind(this);
     this.handlePointerMove = this.handlePointerMove.bind(this);
     this.handlePointerUp = this.handlePointerUp.bind(this);
@@ -146,24 +145,14 @@ export class Joystick {
    * Switches between pointer and touch events based on input detection
    */
   updateEventMode() {
-    // Check if we should use touch events based on current viewport
     const shouldUseTouch = this.shouldUseTouchEvents();
-
-    // Debug logging
-    console.log('Event mode update:', {
-      shouldUseTouch,
-      currentPointerEnabled: this.pointerEventsEnabled,
-      currentTouchEnabled: this.touchEventsEnabled,
-    });
 
     if (shouldUseTouch) {
       this.disablePointerEvents();
       this.enableTouchEvents();
-      console.log('Switched to TOUCH mode');
     } else {
       this.disableTouchEvents();
       this.enablePointerEvents();
-      console.log('Switched to POINTER mode');
     }
   }
 
@@ -189,16 +178,6 @@ export class Joystick {
     // Use touch events if we have touch support AND we're in a mobile-like environment
     const shouldUseTouch =
       hasTouchSupport && (isMobileViewport || hasCoarsePointer || hasNoHover);
-
-    // Debug logging
-    console.log('Touch detection:', {
-      hasTouchSupport,
-      isMobileViewport,
-      hasCoarsePointer,
-      hasNoHover,
-      shouldUseTouch,
-      viewport: `${window.innerWidth}x${window.innerHeight}`,
-    });
 
     return shouldUseTouch;
   }
