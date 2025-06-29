@@ -26,6 +26,7 @@ export class TargetController {
    * @param {number} count - Number of targets to create
    * @param {EventBus} eventBus - Event bus for game communication
    * @param {Object} [config=CURRENT_TARGET_CONFIG] - Target configuration object
+   * @param {THREE.Texture} [texture] - Texture to apply to targets
    * @constructor
    */
   constructor(
@@ -33,7 +34,8 @@ export class TargetController {
     targetObj,
     count,
     eventBus,
-    config = CURRENT_TARGET_CONFIG
+    config = CURRENT_TARGET_CONFIG,
+    texture = null
   ) {
     /** @type {THREE.Scene} Main game scene */
     this.scene = scene;
@@ -45,6 +47,8 @@ export class TargetController {
     this.count = count;
     /** @type {Object} Target configuration object */
     this.config = config;
+    /** @type {THREE.Texture|null} Texture to apply to targets */
+    this.texture = texture;
 
     /** @type {Array<THREE.Group>} Array of target objects */
     this.targets = [];
@@ -52,8 +56,37 @@ export class TargetController {
     this.targetAnimations = new Map();
     /** @type {Map<THREE.Group, Object>} Map tracking movement state for moving targets */
     this.targetMovements = new Map();
+
+    // Apply texture to the original target object if texture is provided
+    if (this.texture) {
+      this.applyTextureToTarget(this.targetObj);
+    }
+
     this.setupTargets();
     this.setupEventListeners();
+  }
+
+  /**
+   * Applies texture to all materials in a target object
+   * @param {THREE.Group} target - The target object to apply texture to
+   */
+  applyTextureToTarget(target) {
+    target.traverse((child) => {
+      if (child.isMesh && child.material) {
+        // Handle both single material and material array
+        if (Array.isArray(child.material)) {
+          child.material.forEach((material) => {
+            if (material) {
+              material.map = this.texture;
+              material.needsUpdate = true;
+            }
+          });
+        } else {
+          child.material.map = this.texture;
+          child.material.needsUpdate = true;
+        }
+      }
+    });
   }
 
   /**
@@ -274,8 +307,8 @@ export class TargetController {
   }
 
   /**
-   * Creates a target object at the specified position
-   * @param {THREE.Vector3} position - Position to create the target at
+   * Creates a target object at the specified position with texture applied
+   * @param {THREE.Vector3} position - Position to place the target
    * @returns {THREE.Group} The created target object
    */
   createTarget(position) {

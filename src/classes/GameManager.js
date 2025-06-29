@@ -81,7 +81,15 @@ export class GameManager {
    */
   loadAssets(assets) {
     Object.entries(assets).forEach(([key, asset]) => {
-      this.assetLoader.loadFBX(key, asset);
+      if (key.includes('FBX')) {
+        this.assetLoader.loadFBX(key, asset);
+      } else if (
+        key.includes('Texture') ||
+        key.includes('basecolor') ||
+        key.includes('.png')
+      ) {
+        this.assetLoader.loadTexture(key, asset);
+      }
     });
   }
 
@@ -105,7 +113,8 @@ export class GameManager {
       this.assetLoader.getFBX('dummyTargetFBXBase64'),
       CURRENT_TARGET_CONFIG.count,
       this.eventBus,
-      CURRENT_TARGET_CONFIG
+      CURRENT_TARGET_CONFIG,
+      this.assetLoader.getTexture('dummyTargetTextureBase64')
     );
 
     this.game.setPlayerController(this.playerController);

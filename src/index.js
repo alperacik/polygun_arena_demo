@@ -10,6 +10,7 @@
 import mergedFBXBase64 from '../assets/sk_vortex_without_animation_merged.fbx';
 import mergedAnimFBXBase64 from '../assets/sk_vortex_only_animation_merged.fbx';
 import dummyTargetFBXBase64 from '../assets/target_dummy/sk_prop_dummy_mesh.fbx';
+import dummyTargetTextureBase64 from '../assets/target_dummy/t_dummy_basecolor.png';
 
 import { GameManager } from './classes/GameManager';
 
@@ -33,6 +34,7 @@ const assets = {
   mergedFBXBase64,
   mergedAnimFBXBase64,
   dummyTargetFBXBase64,
+  dummyTargetTextureBase64,
 };
 
 // Load assets into the game manager
