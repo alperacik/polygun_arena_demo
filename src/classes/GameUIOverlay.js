@@ -518,11 +518,7 @@ export class GameUIOverlay {
    * Determines platform and opens appropriate app store link
    */
   handleDownload() {
-    if (this.downloadHandler) {
-      this.downloadHandler();
-    } else {
-      this.defaultDownloadHandler();
-    }
+    this.defaultDownloadHandler();
   }
 
   /**
@@ -569,14 +565,6 @@ export class GameUIOverlay {
       this.overlay.style.width = '100vw';
       this.overlay.style.height = '100vh';
     }
-  }
-
-  /**
-   * Sets a custom download handler function
-   * @param {Function} fn - Custom download handler function
-   */
-  setDownloadHandler(fn) {
-    this.downloadHandler = fn;
   }
 
   /**

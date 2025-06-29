@@ -55,17 +55,17 @@ export const GAME_CONFIG = {
   /** Maximum pitch angle for camera in radians */
   PITCH_CLAMP: Math.PI * 0.1,
   /** Number of kills needed to win the game */
-  KILL_COUNT_TO_WIN: 20, // Number of kills needed to win the game
+  KILL_COUNT_TO_WIN: 10, // Number of kills needed to win the game
   // Player initial position
   /** Player initial position coordinates */
   PLAYER_INITIAL_POSITION: { x: 0, y: 0, z: 40 },
   // Movement boundaries (half of GROUND_SIZE to keep player within the ground)
   /** Movement boundaries to keep player within the ground */
   MOVEMENT_BOUNDS: {
-    MIN_X: -50,
-    MAX_X: 50,
-    MIN_Z: -50,
-    MAX_Z: 50,
+    MIN_X: -100,
+    MAX_X: 100,
+    MIN_Z: -100,
+    MAX_Z: 100,
   },
 };
 
@@ -175,7 +175,7 @@ export const TARGET_CONFIGS = {
  * Current target configuration (change this to switch layouts)
  * @type {Object}
  */
-export const CURRENT_TARGET_CONFIG = TARGET_CONFIGS.LINEAR;
+export const CURRENT_TARGET_CONFIG = TARGET_CONFIGS.SCATTERED;
 
 // Computed effective kill count (ensures game is always winnable)
 // Uses the current target configuration count instead of the old GAME_CONFIG.TARGET_COUNT

@@ -241,28 +241,4 @@ export class Game {
   getRotationState() {
     return this.rotationState;
   }
-
-  /**
-   * Checks if the game is over
-   * @returns {boolean} True if game is over, false otherwise
-   */
-  isGameOver() {
-    return this.isGameOver;
-  }
-
-  /**
-   * Sets the game over state
-   * @param {boolean} value - New game over state
-   */
-  setGameOver(value) {
-    this.isGameOver = value;
-  }
-
-  /**
-   * Gets the current kill count
-   * @returns {number} Current number of kills
-   */
-  getKillCount() {
-    return this.killCount;
-  }
 }

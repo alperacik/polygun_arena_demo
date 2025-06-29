@@ -411,28 +411,4 @@ export class PlayerController {
   getCamera() {
     return this.camera;
   }
-
-  /**
-   * Gets the current player position
-   * @returns {THREE.Vector3} Clone of the player's current position
-   */
-  getPosition() {
-    return this.obj3D.position.clone();
-  }
-
-  /**
-   * Checks if the player is at any movement boundary
-   * @returns {Object} Object indicating which boundaries the player is at
-   */
-  isAtBoundary() {
-    const pos = this.obj3D.position;
-    const bounds = GAME_CONFIG.MOVEMENT_BOUNDS;
-
-    return {
-      atXMin: Math.abs(pos.x - bounds.MIN_X) < 0.1,
-      atXMax: Math.abs(pos.x - bounds.MAX_X) < 0.1,
-      atZMin: Math.abs(pos.z - bounds.MIN_Z) < 0.1,
-      atZMax: Math.abs(pos.z - bounds.MAX_Z) < 0.1,
-    };
-  }
 }

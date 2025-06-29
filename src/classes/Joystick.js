@@ -457,14 +457,6 @@ export class Joystick {
   }
 
   /**
-   * Sets the visibility of the joystick container
-   * @param {boolean} value - Whether the container should be visible
-   */
-  setContainerVisibility(value) {
-    this.container.style.visibility = value ? 'visible' : 'hidden';
-  }
-
-  /**
    * Handles window resize events and updates joystick dimensions
    */
   resize() {
@@ -483,42 +475,6 @@ export class Joystick {
   }
 
   /**
-   * Destroys the joystick and cleans up all event listeners
-   */
-  destroy() {
-    // Remove event listeners
-    this.pointerListeners.forEach((eventType) => {
-      window.removeEventListener(
-        eventType,
-        this[`handle${eventType.charAt(0).toUpperCase() + eventType.slice(1)}`]
-      );
-    });
-
-    this.touchListeners.forEach((eventType) => {
-      window.removeEventListener(
-        eventType,
-        this[`handle${eventType.charAt(0).toUpperCase() + eventType.slice(1)}`]
-      );
-    });
-
-    // Remove resize listener
-    if (this.resizeHandler) {
-      window.removeEventListener('resize', this.resizeHandler);
-    }
-
-    // Remove DOM elements
-    if (this.container && this.container.parentNode) {
-      this.container.parentNode.removeChild(this.container);
-    }
-
-    // Remove styles
-    const styleElement = document.querySelector('style');
-    if (styleElement && styleElement.textContent.includes('#joy-container')) {
-      styleElement.remove();
-    }
-  }
-
-  /**
    * Handles window resize events and updates joystick configuration
    */
   handleResize() {
@@ -534,13 +490,6 @@ export class Joystick {
     }
 
     // Update event mode
-    this.updateEventMode();
-  }
-
-  /**
-   * Refreshes the event mode detection and switches if necessary
-   */
-  refreshEventMode() {
     this.updateEventMode();
   }
 }

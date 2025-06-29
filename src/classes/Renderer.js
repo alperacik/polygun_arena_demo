@@ -85,14 +85,6 @@ export class Renderer {
   }
 
   /**
-   * Gets the DOM element (canvas) of the renderer
-   * @returns {HTMLCanvasElement} The renderer's canvas element
-   */
-  getDomElement() {
-    return this.renderer.domElement;
-  }
-
-  /**
    * Updates camera aspect ratio based on current window dimensions
    * @param {THREE.Camera} camera - The camera to update
    */

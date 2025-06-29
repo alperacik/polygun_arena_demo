@@ -8,10 +8,7 @@
 
 import * as THREE from 'three';
 import { SkeletonUtils } from 'three/examples/jsm/Addons.js';
-import {
-  PLAY_AGAIN_EVENT_NAME,
-  TARGET_CONFIG_CHANGED_EVENT_NAME,
-} from '../helpers/EventNames';
+import { PLAY_AGAIN_EVENT_NAME } from '../helpers/EventNames';
 import { ANIMATION_CONFIG, CURRENT_TARGET_CONFIG } from '../helpers/constants';
 
 /**
@@ -294,6 +291,36 @@ export class TargetController {
   }
 
   /**
+   * Calculates scattered arrangement positions for targets
+   * @returns {Array<THREE.Vector3>} Array of scattered target positions
+   */
+  calculateScatteredPositions() {
+    const positions = [];
+    const bounds = this.config.bounds;
+
+    for (let i = 0; i < this.config.count; i++) {
+      let position;
+      let attempts = 0;
+      const maxAttempts = 100;
+
+      do {
+        position = new THREE.Vector3(
+          bounds.minX + Math.random() * (bounds.maxX - bounds.minX),
+          bounds.y,
+          bounds.minZ + Math.random() * (bounds.maxZ - bounds.minZ)
+        );
+        attempts++;
+      } while (
+        attempts < maxAttempts &&
+        this.isTooCloseToExisting(position, positions, this.config.minDistance)
+      );
+
+      positions.push(position);
+    }
+    return positions;
+  }
+
+  /**
    * Checks if a new position is too close to existing positions
    * @param {THREE.Vector3} newPos - New position to check
    * @param {Array<THREE.Vector3>} existingPositions - Array of existing positions
@@ -361,35 +388,6 @@ export class TargetController {
    */
   getTargets() {
     return this.targets;
-  }
-
-  /**
-   * Gets the total target count based on the current layout configuration
-   * @returns {number} Total number of targets for the current layout
-   */
-  getTargetCount() {
-    // Calculate actual target count based on layout
-    switch (this.config.layout) {
-      case 'grid':
-        return this.config.rows * this.config.cols;
-      case 'pyramid': {
-        let pyramidCount = 0;
-        for (let row = 0; row < this.config.rows; row++) {
-          pyramidCount += this.config.baseCount - row;
-        }
-        return pyramidCount;
-      }
-      default:
-        return this.config.count;
-    }
-  }
-
-  /**
-   * Gets the current number of target objects
-   * @returns {number} Current number of target objects
-   */
-  getCurrentTargetCount() {
-    return this.targets.length;
   }
 
   /**
@@ -490,31 +488,5 @@ export class TargetController {
         target.position.z = moveState.startPosition.z + offsetZ;
       }
     });
-  }
-
-  /**
-   * Changes the target configuration and recreates targets
-   * @param {Object} newConfig - New target configuration object
-   */
-  changeConfiguration(newConfig) {
-    // Remove existing targets
-    this.targets.forEach((target) => {
-      this.scene.remove(target);
-    });
-
-    // Update configuration
-    this.config = newConfig;
-    this.count = newConfig.count;
-
-    // Clear existing maps
-    this.targetAnimations.clear();
-    this.targetMovements.clear();
-
-    // Recreate targets with new configuration
-    this.targets = [];
-    this.setupTargets();
-
-    // Emit configuration change event
-    this.eventBus.emit(TARGET_CONFIG_CHANGED_EVENT_NAME);
   }
 }
