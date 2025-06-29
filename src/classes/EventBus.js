@@ -1,21 +1,39 @@
+/**
+ * @fileoverview EventBus class implementing a singleton event system for game-wide communication.
+ * Provides event registration, emission, and removal capabilities with priority-based ordering.
+ *
+ * @author Alper Açık
+ * @version 1.0.0
+ */
+
+/**
+ * EventBus class for managing game events with priority-based ordering
+ * Implements singleton pattern to ensure single instance across the application
+ */
 export class EventBus {
+  /**
+   * Creates a new EventBus instance or returns existing singleton instance
+   * @constructor
+   */
   constructor() {
     if (EventBus._instance) {
       return EventBus._instance;
     }
 
     EventBus._instance = this;
-    this._listeners = {}; // { eventName: [ {cb, order, seq} ] }
-    this._seq = 0; // global incrementing sequence for tie-breaks
+    /** @type {Object.<string, Array>} Event listeners storage: { eventName: [ {cb, order, seq} ] } */
+    this._listeners = {};
+    /** @type {number} Global incrementing sequence for tie-breaks in priority ordering */
+    this._seq = 0;
 
     return EventBus._instance;
   }
 
   /**
-   * Register a listener.
-   * @param {string}  event   Name of the event
-   * @param {Function} cb     Callback to invoke
-   * @param {number}  order   Numeric priority (lower = earlier). Default 0.
+   * Register a listener for an event with optional priority ordering
+   * @param {string} event - Name of the event to listen for
+   * @param {Function} cb - Callback function to invoke when event is emitted
+   * @param {number} [order=0] - Numeric priority (lower = earlier execution). Default 0.
    */
   on(event, cb, order = 0) {
     if (!this._listeners[event]) this._listeners[event] = [];
@@ -30,7 +48,9 @@ export class EventBus {
   }
 
   /**
-   * Remove a listener.
+   * Remove a specific listener from an event
+   * @param {string} event - Name of the event to remove listener from
+   * @param {Function} cb - Callback function to remove
    */
   off(event, cb) {
     if (!this._listeners[event]) return;
@@ -38,7 +58,9 @@ export class EventBus {
   }
 
   /**
-   * Emit an event.
+   * Emit an event to all registered listeners
+   * @param {string} event - Name of the event to emit
+   * @param {...*} args - Arguments to pass to the callback functions
    */
   emit(event, ...args) {
     if (!this._listeners[event]) return;

@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Game class representing the main game logic and scene management.
+ * Handles game state, target hit detection, rotation updates, and game reset functionality.
+ *
+ * @author Alper Açık
+ * @version 1.0.0
+ */
+
 import * as THREE from 'three';
 import {
   GAME_CONFIG,
@@ -12,14 +20,29 @@ import {
   TARGET_CONFIG_CHANGED_EVENT_NAME,
 } from '../helpers/EventNames';
 
+/**
+ * Game class managing the main game logic, scene, and game state
+ * Coordinates between player controller, target controller, and game events
+ */
 export class Game {
+  /**
+   * Creates a new Game instance with event bus and initializes game components
+   * @param {EventBus} eventBus - Event bus for game-wide communication
+   * @constructor
+   */
   constructor(eventBus) {
+    /** @type {EventBus} Event bus for game-wide communication */
     this.eventBus = eventBus;
+    /** @type {boolean} Flag indicating if the game is over */
     this.isGameOver = false;
+    /** @type {Object} Current rotation state with yaw and pitch values */
     this.rotationState = { yaw: 0, pitch: 0 };
+    /** @type {THREE.Clock} Three.js clock for timing calculations */
     this.clock = new THREE.Clock();
+    /** @type {THREE.Raycaster} Raycaster for hit detection */
     this.raycaster = new THREE.Raycaster();
-    this.killCount = 0; // Track kill count
+    /** @type {number} Current kill count for win condition tracking */
+    this.killCount = 0;
 
     this.setupScene();
     this.setupLights();
@@ -27,7 +50,12 @@ export class Game {
     this.setupEventListeners();
   }
 
+  /**
+   * Sets up the Three.js scene with background color
+   * Initializes the main scene container for all game objects
+   */
   setupScene() {
+    /** @type {THREE.Scene} Main Three.js scene */
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color().setRGB(
       COLORS.SCENE_BACKGROUND.r,
@@ -36,6 +64,10 @@ export class Game {
     );
   }
 
+  /**
+   * Sets up lighting for the scene with ambient and directional lights
+   * Provides proper illumination for all game objects
+   */
   setupLights() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambientLight);
@@ -45,6 +77,10 @@ export class Game {
     this.scene.add(directionalLight);
   }
 
+  /**
+   * Sets up the ground plane with a checkerboard texture pattern
+   * Creates a textured ground surface for the game environment
+   */
   setupGround() {
     const size = 8;
     const data = new Uint8Array(size * size * 4);
@@ -75,6 +111,7 @@ export class Game {
       side: THREE.FrontSide,
     });
 
+    /** @type {THREE.Mesh} Ground plane mesh */
     this.ground = new THREE.Mesh(
       new THREE.PlaneGeometry(GAME_CONFIG.GROUND_SIZE, GAME_CONFIG.GROUND_SIZE),
       material
@@ -83,6 +120,10 @@ export class Game {
     this.scene.add(this.ground);
   }
 
+  /**
+   * Sets up event listeners for game events
+   * Handles play again requests and target configuration changes
+   */
   setupEventListeners() {
     this.eventBus.on(PLAY_AGAIN_EVENT_NAME, () => {
       this.resetGame();
@@ -98,14 +139,23 @@ export class Game {
     });
   }
 
+  /**
+   * Resets the game state to initial values
+   * Clears game over flag, resets rotation and kill count
+   */
   resetGame() {
     this.isGameOver = false;
     this.rotationState.yaw = 0;
     this.rotationState.pitch = 0;
-    this.killCount = 0; // Reset kill count
+    this.killCount = 0;
     this.eventBus.emit(KILL_COUNT_UPDATE_EVENT_NAME, this.killCount);
   }
 
+  /**
+   * Updates camera rotation based on joystick input
+   * @param {Object} joystickInput - Joystick input values {x, y}
+   * @param {number} delta - Time delta for smooth rotation
+   */
   updateRotation(joystickInput, delta) {
     this.rotationState.yaw -=
       joystickInput.x * delta * GAME_CONFIG.ROTATION_SPEED;
@@ -117,6 +167,12 @@ export class Game {
     );
   }
 
+  /**
+   * Checks for target hits using raycasting from camera center
+   * @param {THREE.Camera} camera - Camera to cast ray from
+   * @param {Array<THREE.Object3D>} targets - Array of target objects to check
+   * @returns {boolean} True if a hit was detected, false otherwise
+   */
   checkTargetHits(camera, targets) {
     if (!this.playerController?.isWeaponReady()) return;
 
@@ -130,7 +186,7 @@ export class Game {
           firstHit.object.parent
         );
         if (targetEliminated) {
-          this.killCount++; // Increment kill count
+          this.killCount++;
           this.eventBus.emit(KILL_COUNT_UPDATE_EVENT_NAME, this.killCount);
 
           // Check if kill count reached the effective win condition
@@ -146,34 +202,66 @@ export class Game {
     return false; // No hit
   }
 
+  /**
+   * Sets the player controller reference
+   * @param {PlayerController} playerController - Player controller instance
+   */
   setPlayerController(playerController) {
     this.playerController = playerController;
   }
 
+  /**
+   * Sets the target controller reference
+   * @param {TargetController} targetController - Target controller instance
+   */
   setTargetController(targetController) {
     this.targetController = targetController;
   }
 
+  /**
+   * Gets the main scene
+   * @returns {THREE.Scene} The main game scene
+   */
   getScene() {
     return this.scene;
   }
 
+  /**
+   * Gets the Three.js clock for timing
+   * @returns {THREE.Clock} The game clock
+   */
   getClock() {
     return this.clock;
   }
 
+  /**
+   * Gets the current rotation state
+   * @returns {Object} Current rotation state with yaw and pitch
+   */
   getRotationState() {
     return this.rotationState;
   }
 
+  /**
+   * Checks if the game is over
+   * @returns {boolean} True if game is over, false otherwise
+   */
   isGameOver() {
     return this.isGameOver;
   }
 
+  /**
+   * Sets the game over state
+   * @param {boolean} value - New game over state
+   */
   setGameOver(value) {
     this.isGameOver = value;
   }
 
+  /**
+   * Gets the current kill count
+   * @returns {number} Current number of kills
+   */
   getKillCount() {
     return this.killCount;
   }

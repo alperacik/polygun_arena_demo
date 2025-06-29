@@ -1,3 +1,11 @@
+/**
+ * @fileoverview GameUIOverlay class managing all user interface elements for the game.
+ * Handles crosshair, hit markers, kill counter, game over overlay, and app download buttons.
+ *
+ * @author Alper Açık
+ * @version 1.0.0
+ */
+
 import {
   GAME_OVER_EVENT_NAME,
   PLAY_AGAIN_EVENT_NAME,
@@ -12,10 +20,24 @@ import {
   getEffectiveKillCountToWin,
 } from '../helpers/constants';
 
+/**
+ * GameUIOverlay class managing all game user interface elements
+ * Provides crosshair, hit markers, kill counter, and game over overlay functionality
+ */
 export class GameUIOverlay {
+  /**
+   * Creates a new GameUIOverlay instance with event bus and app links
+   * @param {EventBus} eventBus - Event bus for game communication
+   * @param {string} [androidAppLink] - Android app store link
+   * @param {string} [iosAppLink] - iOS app store link
+   * @constructor
+   */
   constructor(eventBus, androidAppLink, iosAppLink) {
+    /** @type {EventBus} Event bus for game communication */
     this.eventBus = eventBus;
+    /** @type {string} Android app store link */
     this.androidAppLink = androidAppLink || APP_LINKS.ANDROID;
+    /** @type {string} iOS app store link */
     this.iosAppLink = iosAppLink || APP_LINKS.IOS;
 
     this.createCrosshair();
@@ -29,6 +51,10 @@ export class GameUIOverlay {
     window.addEventListener('resize', this.resizeHandler);
   }
 
+  /**
+   * Sets up event listeners for game events
+   * Handles game over, kill count updates, shooting events, and target configuration changes
+   */
   setupEventListeners() {
     this.eventBus.on(GAME_OVER_EVENT_NAME, () => {
       setTimeout(() => {
@@ -55,8 +81,12 @@ export class GameUIOverlay {
     });
   }
 
-  // ==== Crosshair ====
+  /**
+   * Creates the crosshair element with center dot and directional lines
+   * Sets up the main crosshair container and its components
+   */
   createCrosshair() {
+    /** @type {HTMLElement} Main crosshair container element */
     this.crosshair = document.createElement('div');
     Object.assign(this.crosshair.style, {
       position: 'fixed',
@@ -73,9 +103,13 @@ export class GameUIOverlay {
     const centerDot = this.createCrosshairDot();
 
     // Create 4 lines extending from center
+    /** @type {HTMLElement} Top crosshair line */
     this.topLine = this.createCrosshairLine('top');
+    /** @type {HTMLElement} Bottom crosshair line */
     this.bottomLine = this.createCrosshairLine('bottom');
+    /** @type {HTMLElement} Left crosshair line */
     this.leftLine = this.createCrosshairLine('left');
+    /** @type {HTMLElement} Right crosshair line */
     this.rightLine = this.createCrosshairLine('right');
 
     this.crosshair.appendChild(centerDot);
@@ -86,6 +120,10 @@ export class GameUIOverlay {
     document.body.appendChild(this.crosshair);
   }
 
+  /**
+   * Creates the center dot element for the crosshair
+   * @returns {HTMLElement} The center dot element
+   */
   createCrosshairDot() {
     const dot = document.createElement('div');
     Object.assign(dot.style, {
@@ -101,6 +139,11 @@ export class GameUIOverlay {
     return dot;
   }
 
+  /**
+   * Creates a crosshair line element in the specified direction
+   * @param {string} direction - Direction of the line ('top', 'bottom', 'left', 'right')
+   * @returns {HTMLElement} The crosshair line element
+   */
   createCrosshairLine(direction) {
     const line = document.createElement('div');
     const lineLength = '1.2vh'; // Shorter lines for more padding
@@ -153,7 +196,10 @@ export class GameUIOverlay {
     return line;
   }
 
-  // ==== Crosshair Animation ====
+  /**
+   * Animates the crosshair spread effect when shooting
+   * Triggers recoil animation and line movement animations
+   */
   animateCrosshairSpread() {
     console.log('Crosshair spread animation triggered!');
 
@@ -189,6 +235,10 @@ export class GameUIOverlay {
     );
   }
 
+  /**
+   * Animates the crosshair recoil effect when shooting
+   * Moves the crosshair up and scales it slightly for visual feedback
+   */
   animateCrosshairRecoil() {
     // Store original transform
     const originalTransform = this.crosshair.style.transform;
@@ -204,6 +254,13 @@ export class GameUIOverlay {
     }, 80);
   }
 
+  /**
+   * Animates a crosshair line movement from one position to another
+   * @param {HTMLElement} line - The line element to animate
+   * @param {string} position - CSS position property to animate ('top', 'left', etc.)
+   * @param {string} fromPos - Starting position value
+   * @param {string} toPos - Ending position value
+   */
   animateLineMovement(line, position, fromPos, toPos) {
     console.log(`Moving line ${position} from ${fromPos} to ${toPos}`);
 
@@ -226,7 +283,12 @@ export class GameUIOverlay {
   }
 
   // ==== Hit Marker ====
+  /**
+   * Creates the hit marker element with diagonal lines
+   * Sets up the hit marker container and its line components
+   */
   createHitMarker() {
+    /** @type {HTMLElement} Hit marker container element */
     this.hitMarker = document.createElement('div');
     Object.assign(this.hitMarker.style, {
       position: 'fixed',
@@ -245,6 +307,10 @@ export class GameUIOverlay {
     document.body.appendChild(this.hitMarker);
   }
 
+  /**
+   * Creates the hit marker line elements in diagonal directions
+   * Creates four diagonal lines forming an X pattern
+   */
   createHitMarkerLines() {
     const lineConfigs = [
       { rotation: 45, x: 'left', y: 'top', origin: 'left center' },
@@ -259,6 +325,15 @@ export class GameUIOverlay {
     });
   }
 
+  /**
+   * Creates a single hit marker line element
+   * @param {Object} config - Line configuration object
+   * @param {number} config.rotation - Rotation angle in degrees
+   * @param {string} config.x - X position property
+   * @param {string} config.y - Y position property
+   * @param {string} config.origin - Transform origin
+   * @returns {HTMLElement} The hit marker line element
+   */
   createHitMarkerLine({ rotation, x, y, origin }) {
     const line = document.createElement('div');
     Object.assign(line.style, {
@@ -274,6 +349,10 @@ export class GameUIOverlay {
     return line;
   }
 
+  /**
+   * Shows the hit marker with fade in/out animation
+   * Displays the hit marker briefly when a target is hit
+   */
   showHitMarker() {
     this.hitMarker.style.opacity = '1';
     setTimeout(() => {
@@ -282,7 +361,12 @@ export class GameUIOverlay {
   }
 
   // ==== Kill Counter ====
+  /**
+   * Creates the kill counter display element
+   * Shows current kills vs required kills to win
+   */
   createKillCounter() {
+    /** @type {HTMLElement} Kill counter display element */
     this.killCounter = document.createElement('div');
     Object.assign(this.killCounter.style, {
       position: 'fixed',
@@ -305,6 +389,10 @@ export class GameUIOverlay {
     document.body.appendChild(this.killCounter);
   }
 
+  /**
+   * Updates the kill counter display with new kill count
+   * @param {number} killCount - Current number of kills
+   */
   updateKillCounter(killCount) {
     this.currentKillCount = killCount;
     this.updateKillCounterDisplay();
@@ -318,6 +406,10 @@ export class GameUIOverlay {
     }, 200);
   }
 
+  /**
+   * Updates the kill counter display text
+   * Shows current kills vs effective kill count needed to win
+   */
   updateKillCounterDisplay() {
     const currentKillCount = this.currentKillCount || 0;
     const effectiveKillCountToWin = getEffectiveKillCountToWin();
@@ -325,7 +417,12 @@ export class GameUIOverlay {
   }
 
   // ==== Game Over Overlay ====
+  /**
+   * Creates the game over overlay element
+   * Sets up the main overlay container for game over screen
+   */
   createOverlay() {
+    /** @type {HTMLElement} Game over overlay container */
     this.overlay = document.createElement('div');
     Object.assign(this.overlay.style, {
       position: 'fixed',
@@ -347,6 +444,10 @@ export class GameUIOverlay {
     document.body.appendChild(this.overlay);
   }
 
+  /**
+   * Creates the button wrapper container for game over overlay
+   * @returns {HTMLElement} Button wrapper element containing play again and download buttons
+   */
   createButtonWrapper() {
     const buttonWrapper = document.createElement('div');
     Object.assign(buttonWrapper.style, {
@@ -372,6 +473,12 @@ export class GameUIOverlay {
     return buttonWrapper;
   }
 
+  /**
+   * Creates a button element with specified label and click handler
+   * @param {string} label - Button text label
+   * @param {Function} handler - Click event handler function
+   * @returns {HTMLElement} The created button element
+   */
   createButton(label, handler) {
     const btn = document.createElement('button');
     btn.textContent = label;
@@ -414,67 +521,100 @@ export class GameUIOverlay {
     return btn;
   }
 
+  /**
+   * Handles the download button click event
+   * Determines platform and opens appropriate app store link
+   */
   handleDownload() {
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-    if (/android/i.test(userAgent)) {
-      window.open(this.androidAppLink);
-    } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-      window.open(this.iosAppLink);
+    if (this.downloadHandler) {
+      this.downloadHandler();
     } else {
-      window.open(this.androidAppLink);
+      this.defaultDownloadHandler();
     }
   }
 
+  /**
+   * Shows the game over overlay
+   * Makes the overlay visible when the game ends
+   */
   showGameOverOverlay() {
     this.overlay.style.visibility = 'visible';
   }
 
+  /**
+   * Hides the game over overlay
+   * Makes the overlay invisible
+   */
   hideGameOverOverlay() {
     this.overlay.style.visibility = 'hidden';
   }
 
+  /**
+   * Handles window resize events and updates UI elements
+   * Adjusts UI element positions and sizes for responsive design
+   */
   resize() {
-    // Handle mobile viewport issues where 100vh might not work correctly
-
-    // Update overlay dimensions to use calculated viewport units
-    if (this.overlay) {
-      this.overlay.style.height = `${window.innerHeight}px`;
-      this.overlay.style.width = `${window.innerWidth}px`;
+    // Update crosshair position (should stay centered)
+    if (this.crosshair) {
+      this.crosshair.style.top = '50%';
+      this.crosshair.style.left = '50%';
     }
 
-    // Force reflow of viewport units for other elements
-    const elements = [this.hitMarker, this.crosshair];
+    // Update hit marker position (should stay centered)
+    if (this.hitMarker) {
+      this.hitMarker.style.top = '50%';
+      this.hitMarker.style.left = '50%';
+    }
 
-    elements.forEach((element) => {
-      if (element && element.style) {
-        // Trigger reflow by temporarily changing and restoring a property
-        const originalVisibility = element.style.visibility;
-        element.style.visibility = 'hidden';
-        // Force reflow
-        element.offsetHeight;
-        element.style.visibility = originalVisibility;
-      }
-    });
+    // Update kill counter position
+    if (this.killCounter) {
+      this.killCounter.style.top = '2vh';
+      this.killCounter.style.left = '2vh';
+    }
+
+    // Update overlay size
+    if (this.overlay) {
+      this.overlay.style.width = '100vw';
+      this.overlay.style.height = '100vh';
+    }
   }
 
+  /**
+   * Sets a custom download handler function
+   * @param {Function} fn - Custom download handler function
+   */
   setDownloadHandler(fn) {
     this.downloadHandler = fn;
   }
 
+  /**
+   * Default download handler that opens app store based on platform
+   * Detects mobile platform and opens appropriate app store link
+   */
   defaultDownloadHandler() {
-    const blob = new Blob(['Default result file'], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'result.txt';
-    a.click();
-    URL.revokeObjectURL(url);
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isAndroid = /android/.test(userAgent);
+    const isIOS = /iphone|ipad|ipod/.test(userAgent);
+
+    if (isAndroid) {
+      window.open(this.androidAppLink, '_blank');
+    } else if (isIOS) {
+      window.open(this.iosAppLink, '_blank');
+    } else {
+      // Default to Android link for desktop
+      window.open(this.androidAppLink, '_blank');
+    }
   }
 
+  /**
+   * Disposes of the UI overlay and cleans up all elements
+   * Removes all DOM elements and event listeners
+   */
   dispose() {
-    // Remove event listeners
-    window.removeEventListener('resize', this.resizeHandler);
+    // Remove resize listener
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+    }
 
     // Remove DOM elements
     if (this.crosshair && this.crosshair.parentNode) {
@@ -482,6 +622,9 @@ export class GameUIOverlay {
     }
     if (this.hitMarker && this.hitMarker.parentNode) {
       this.hitMarker.parentNode.removeChild(this.hitMarker);
+    }
+    if (this.killCounter && this.killCounter.parentNode) {
+      this.killCounter.parentNode.removeChild(this.killCounter);
     }
     if (this.overlay && this.overlay.parentNode) {
       this.overlay.parentNode.removeChild(this.overlay);

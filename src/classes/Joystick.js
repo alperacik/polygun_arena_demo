@@ -1,17 +1,42 @@
+/**
+ * @fileoverview Joystick class providing touch and pointer input handling for mobile and desktop devices.
+ * Manages virtual joystick controls with automatic input mode detection and responsive design.
+ *
+ * @author Alper Açık
+ * @version 1.0.0
+ */
+
 import {
   GAME_OVER_EVENT_NAME,
   PLAY_AGAIN_EVENT_NAME,
 } from '../helpers/EventNames';
 import { JOYSTICK_CONFIG, COLORS } from '../helpers/constants';
 
+/**
+ * Joystick class for handling touch and pointer input with automatic mode detection
+ * Provides virtual joystick controls that adapt to different input devices and screen sizes
+ */
 export class Joystick {
+  /**
+   * Creates a new Joystick instance with event bus and visibility settings
+   * @param {EventBus} eventBus - Event bus for game communication
+   * @param {boolean} isVisible - Whether the joystick should be visually rendered
+   * @constructor
+   */
   constructor(eventBus, isVisible) {
+    /** @type {EventBus} Event bus for game communication */
     this.eventBus = eventBus;
+    /** @type {boolean} Flag indicating if joystick should be visually rendered */
     this.isVisible = isVisible;
+    /** @type {Object} Current joystick input values {x, y} */
     this.joystickInput = { x: 0, y: 0 };
+    /** @type {Object} Origin position of the joystick {x, y} */
     this.origin = { x: 0, y: 0 };
+    /** @type {boolean} Flag indicating if joystick is currently active */
     this.active = false;
+    /** @type {Array} Array of touch event listener names */
     this.touchListeners = [];
+    /** @type {Array} Array of pointer event listener names */
     this.pointerListeners = [];
 
     this.calculateSizes();
@@ -19,19 +44,34 @@ export class Joystick {
     this.setupEventListeners();
   }
 
+  /**
+   * Calculates joystick dimensions based on screen size and configuration
+   * Sets base size, stick size, and maximum radius for joystick movement
+   */
   calculateSizes() {
     const shortEdge = Math.min(window.innerWidth, window.innerHeight);
+    /** @type {number} Base size of the joystick */
     this.baseSize = shortEdge * JOYSTICK_CONFIG.BASE_SIZE_RATIO;
+    /** @type {number} Size of the joystick stick */
     this.stickSize = this.baseSize * JOYSTICK_CONFIG.STICK_SIZE_RATIO;
+    /** @type {number} Maximum radius for joystick movement */
     this.maxRadius = this.baseSize * JOYSTICK_CONFIG.MAX_RADIUS_RATIO;
   }
 
+  /**
+   * Sets up the joystick based on visibility requirements
+   * Initializes visual elements if joystick should be visible
+   */
   setupJoystick() {
     if (this.isVisible) {
       this.initVisibleJoystick();
     }
   }
 
+  /**
+   * Sets up event listeners for pointer and touch input
+   * Configures automatic input mode detection and game state handling
+   */
   setupEventListeners() {
     // Remove console.log statements
     this.handlePointerDown = this.handlePointerDown.bind(this);
@@ -52,6 +92,7 @@ export class Joystick {
     this.resizeHandler = this.handleResize.bind(this);
     window.addEventListener('resize', this.resizeHandler);
 
+    /** @type {boolean} Flag indicating if game is over */
     this.isGameOver = false;
 
     this.eventBus.on(GAME_OVER_EVENT_NAME, () => {
@@ -64,6 +105,10 @@ export class Joystick {
     });
   }
 
+  /**
+   * Sets up pointer event listeners for desktop input
+   * Configures pointerdown, pointermove, and pointerup events
+   */
   setupPointerEvents() {
     window.addEventListener('pointerdown', this.handlePointerDown);
     window.addEventListener('pointermove', this.handlePointerMove);
@@ -71,6 +116,10 @@ export class Joystick {
     this.pointerListeners = ['pointerdown', 'pointermove', 'pointerup'];
   }
 
+  /**
+   * Sets up touch event listeners for mobile input
+   * Configures touchstart, touchmove, touchend, and touchcancel events
+   */
   setupTouchEvents() {
     window.addEventListener('touchstart', this.handleTouchStart, {
       passive: false,
@@ -92,6 +141,10 @@ export class Joystick {
     ];
   }
 
+  /**
+   * Updates the event mode based on current device capabilities
+   * Switches between pointer and touch events based on input detection
+   */
   updateEventMode() {
     // Check if we should use touch events based on current viewport
     const shouldUseTouch = this.shouldUseTouchEvents();
@@ -114,6 +167,10 @@ export class Joystick {
     }
   }
 
+  /**
+   * Determines if touch events should be used based on device capabilities
+   * @returns {boolean} True if touch events should be used, false for pointer events
+   */
   shouldUseTouchEvents() {
     // Simplified and more reliable touch detection
     // Focus on actual input capabilities rather than device simulation
@@ -146,40 +203,66 @@ export class Joystick {
     return shouldUseTouch;
   }
 
+  /**
+   * Enables pointer events and disables touch events
+   */
   enablePointerEvents() {
     this.pointerEventsEnabled = true;
     this.touchEventsEnabled = false;
   }
 
+  /**
+   * Disables pointer events
+   */
   disablePointerEvents() {
     this.pointerEventsEnabled = false;
   }
 
+  /**
+   * Enables touch events and disables pointer events
+   */
   enableTouchEvents() {
     this.touchEventsEnabled = true;
     this.pointerEventsEnabled = false;
   }
 
+  /**
+   * Disables touch events
+   */
   disableTouchEvents() {
     this.touchEventsEnabled = false;
   }
 
+  /**
+   * Handles pointer down events for desktop input
+   * @param {PointerEvent} e - Pointer event object
+   */
   handlePointerDown(e) {
     if (!this.pointerEventsEnabled) return;
     this.startJoystick(e.clientX, e.clientY);
   }
 
+  /**
+   * Handles pointer move events for desktop input
+   * @param {PointerEvent} e - Pointer event object
+   */
   handlePointerMove(e) {
     if (!this.active || !this.pointerEventsEnabled) return;
     this.updateJoystickPosition(e.clientX, e.clientY);
   }
 
+  /**
+   * Handles pointer up events for desktop input
+   */
   handlePointerUp() {
     if (!this.pointerEventsEnabled) return;
     this.resetJoystick();
   }
 
-  // Touch event handlers for mobile fallback
+  /**
+   * Handles touch start events for mobile input
+   * @param {TouchEvent} e - Touch event object
+   */
   handleTouchStart(e) {
     if (!this.touchEventsEnabled) return;
 
@@ -190,6 +273,10 @@ export class Joystick {
     this.startJoystick(touch.clientX, touch.clientY);
   }
 
+  /**
+   * Handles touch move events for mobile input
+   * @param {TouchEvent} e - Touch event object
+   */
   handleTouchMove(e) {
     if (!this.active || !this.touchEventsEnabled) return;
 
@@ -200,13 +287,21 @@ export class Joystick {
     this.updateJoystickPosition(touch.clientX, touch.clientY);
   }
 
+  /**
+   * Handles touch end events for mobile input
+   * @param {TouchEvent} e - Touch event object
+   */
   handleTouchEnd(e) {
     if (!this.touchEventsEnabled) return;
     e.preventDefault();
     this.resetJoystick();
   }
 
-  // Shared method for starting joystick interaction
+  /**
+   * Starts joystick interaction at the specified coordinates
+   * @param {number} clientX - X coordinate of the input event
+   * @param {number} clientY - Y coordinate of the input event
+   */
   startJoystick(clientX, clientY) {
     if (this.isGameOver) return;
 
@@ -224,7 +319,9 @@ export class Joystick {
     }
   }
 
-  // Shared method for resetting joystick state
+  /**
+   * Resets joystick state to inactive and clears input values
+   */
   resetJoystick() {
     this.active = false;
     this.joystickInput = { x: 0, y: 0 };
@@ -234,7 +331,11 @@ export class Joystick {
     }
   }
 
-  // Shared method for updating joystick position
+  /**
+   * Updates joystick position and calculates input values
+   * @param {number} clientX - X coordinate of the input event
+   * @param {number} clientY - Y coordinate of the input event
+   */
   updateJoystickPosition(clientX, clientY) {
     if (this.isGameOver) return;
 
@@ -257,10 +358,17 @@ export class Joystick {
       this.origin = { x: clientX, y: clientY };
     }
   }
+
+  /**
+   * Resets joystick input values to zero
+   */
   resetJoystickInput() {
     this.joystickInput = { x: 0, y: 0 };
   }
 
+  /**
+   * Shows the visible joystick at the origin position
+   */
   showJoystick() {
     this.baseEl.style.left = `${this.origin.x}px`;
     this.baseEl.style.top = `${this.origin.y}px`;
@@ -270,6 +378,9 @@ export class Joystick {
     this.container.style.pointerEvents = 'auto';
   }
 
+  /**
+   * Hides the visible joystick and centers the stick
+   */
   hideJoystick() {
     this.baseEl.classList.add('hidden');
     this.centerStick();
@@ -277,19 +388,33 @@ export class Joystick {
     this.container.style.pointerEvents = 'none';
   }
 
+  /**
+   * Centers the joystick stick at the origin position
+   */
   centerStick() {
     this.stickEl.style.transform = 'translate(-50%, -50%)';
   }
 
+  /**
+   * Updates the stick position based on input offset
+   * @param {number} offsetX - X offset from origin
+   * @param {number} offsetY - Y offset from origin
+   */
   updateStickPosition(offsetX, offsetY) {
     this.stickEl.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
   }
 
+  /**
+   * Initializes the visible joystick elements and styles
+   */
   initVisibleJoystick() {
     this.createStyles();
     this.createElements();
   }
 
+  /**
+   * Creates CSS styles for the joystick elements
+   */
   createStyles() {
     const style = document.createElement('style');
     style.textContent = `
@@ -331,13 +456,19 @@ export class Joystick {
     document.head.appendChild(style);
   }
 
+  /**
+   * Creates DOM elements for the visible joystick
+   */
   createElements() {
+    /** @type {HTMLElement} Main joystick container */
     this.container = document.createElement('div');
     this.container.id = 'joy-container';
 
+    /** @type {HTMLElement} Joystick base element */
     this.baseEl = document.createElement('div');
     this.baseEl.className = 'joy-base hidden';
 
+    /** @type {HTMLElement} Joystick stick element */
     this.stickEl = document.createElement('div');
     this.stickEl.className = 'joy-stick';
 
@@ -346,10 +477,17 @@ export class Joystick {
     document.body.appendChild(this.container);
   }
 
+  /**
+   * Sets the visibility of the joystick container
+   * @param {boolean} value - Whether the container should be visible
+   */
   setContainerVisibility(value) {
     this.container.style.visibility = value ? 'visible' : 'hidden';
   }
 
+  /**
+   * Handles window resize events and updates joystick dimensions
+   */
   resize() {
     this.calculateSizes();
 
@@ -358,83 +496,72 @@ export class Joystick {
     // Apply new styles
     this.baseEl.style.width = `${this.baseSize}px`;
     this.baseEl.style.height = `${this.baseSize}px`;
-
     this.stickEl.style.width = `${this.stickSize}px`;
     this.stickEl.style.height = `${this.stickSize}px`;
 
-    // Update event mode when viewport changes
+    // Update event mode on resize
     this.updateEventMode();
   }
 
-  // Cleanup method to remove event listeners
+  /**
+   * Destroys the joystick and cleans up all event listeners
+   */
   destroy() {
-    // Remove pointer event listeners
-    window.removeEventListener('pointerdown', this.handlePointerDown);
-    window.removeEventListener('pointermove', this.handlePointerMove);
-    window.removeEventListener('pointerup', this.handlePointerUp);
+    // Remove event listeners
+    this.pointerListeners.forEach((eventType) => {
+      window.removeEventListener(
+        eventType,
+        this[`handle${eventType.charAt(0).toUpperCase() + eventType.slice(1)}`]
+      );
+    });
 
-    // Remove touch event listeners
-    window.removeEventListener('touchstart', this.handleTouchStart);
-    window.removeEventListener('touchmove', this.handleTouchMove);
-    window.removeEventListener('touchend', this.handleTouchEnd);
-    window.removeEventListener('touchcancel', this.handleTouchEnd);
+    this.touchListeners.forEach((eventType) => {
+      window.removeEventListener(
+        eventType,
+        this[`handle${eventType.charAt(0).toUpperCase() + eventType.slice(1)}`]
+      );
+    });
 
     // Remove resize listener
     if (this.resizeHandler) {
       window.removeEventListener('resize', this.resizeHandler);
     }
 
-    // Clear timeout
-    if (this.resizeTimeout) {
-      clearTimeout(this.resizeTimeout);
-    }
-
+    // Remove DOM elements
     if (this.container && this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
     }
+
+    // Remove styles
+    const styleElement = document.querySelector('style');
+    if (styleElement && styleElement.textContent.includes('#joy-container')) {
+      styleElement.remove();
+    }
   }
 
+  /**
+   * Handles window resize events and updates joystick configuration
+   */
   handleResize() {
-    // Debounce resize events
-    clearTimeout(this.resizeTimeout);
-    this.resizeTimeout = setTimeout(() => {
-      // Force a complete re-evaluation of the event mode
-      const previousPointerEnabled = this.pointerEventsEnabled;
-      const previousTouchEnabled = this.touchEventsEnabled;
+    // Recalculate sizes
+    this.calculateSizes();
 
-      this.updateEventMode();
+    // Update visible joystick if needed
+    if (this.isVisible && this.baseEl) {
+      this.baseEl.style.width = `${this.baseSize}px`;
+      this.baseEl.style.height = `${this.baseSize}px`;
+      this.stickEl.style.width = `${this.stickSize}px`;
+      this.stickEl.style.height = `${this.stickSize}px`;
+    }
 
-      // If the mode changed, log it for debugging
-      if (
-        previousPointerEnabled !== this.pointerEventsEnabled ||
-        previousTouchEnabled !== this.touchEventsEnabled
-      ) {
-        console.log('Event mode changed due to resize:', {
-          from: {
-            pointer: previousPointerEnabled,
-            touch: previousTouchEnabled,
-          },
-          to: {
-            pointer: this.pointerEventsEnabled,
-            touch: this.touchEventsEnabled,
-          },
-        });
-      }
-    }, 100);
-  }
-
-  // Public method to manually refresh event mode
-  refreshEventMode() {
-    console.log('Manually refreshing event mode...');
+    // Update event mode
     this.updateEventMode();
   }
 
-  // Public method to get current event mode status
-  getEventModeStatus() {
-    return {
-      pointerEnabled: this.pointerEventsEnabled,
-      touchEnabled: this.touchEventsEnabled,
-      shouldUseTouch: this.shouldUseTouchEvents(),
-    };
+  /**
+   * Refreshes the event mode detection and switches if necessary
+   */
+  refreshEventMode() {
+    this.updateEventMode();
   }
 }

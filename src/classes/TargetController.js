@@ -1,3 +1,11 @@
+/**
+ * @fileoverview TargetController class managing target creation, positioning, and elimination animations.
+ * Handles various target layouts, movement patterns, and hit detection responses.
+ *
+ * @author Alper Açık
+ * @version 1.0.0
+ */
+
 import * as THREE from 'three';
 import { SkeletonUtils } from 'three/examples/jsm/Addons.js';
 import {
@@ -6,7 +14,20 @@ import {
 } from '../helpers/EventNames';
 import { ANIMATION_CONFIG, CURRENT_TARGET_CONFIG } from '../helpers/constants';
 
+/**
+ * TargetController class managing target objects and their behaviors
+ * Handles target creation, positioning, animations, and elimination
+ */
 export class TargetController {
+  /**
+   * Creates a new TargetController instance with scene and configuration
+   * @param {THREE.Scene} scene - The main game scene
+   * @param {THREE.Group} targetObj - Target 3D model object
+   * @param {number} count - Number of targets to create
+   * @param {EventBus} eventBus - Event bus for game communication
+   * @param {Object} [config=CURRENT_TARGET_CONFIG] - Target configuration object
+   * @constructor
+   */
   constructor(
     scene,
     targetObj,
@@ -14,19 +35,31 @@ export class TargetController {
     eventBus,
     config = CURRENT_TARGET_CONFIG
   ) {
+    /** @type {THREE.Scene} Main game scene */
     this.scene = scene;
+    /** @type {EventBus} Event bus for game communication */
     this.eventBus = eventBus;
+    /** @type {THREE.Group} Target 3D model object */
     this.targetObj = targetObj;
+    /** @type {number} Number of targets to create */
     this.count = count;
+    /** @type {Object} Target configuration object */
     this.config = config;
 
+    /** @type {Array<THREE.Group>} Array of target objects */
     this.targets = [];
-    this.targetAnimations = new Map(); // Track animation state for each target
-    this.targetMovements = new Map(); // Track movement state for moving targets
+    /** @type {Map<THREE.Group, Object>} Map tracking animation state for each target */
+    this.targetAnimations = new Map();
+    /** @type {Map<THREE.Group, Object>} Map tracking movement state for moving targets */
+    this.targetMovements = new Map();
     this.setupTargets();
     this.setupEventListeners();
   }
 
+  /**
+   * Sets up all targets with their initial positions and states
+   * Creates targets, initializes animations, and sets up movement for moving targets
+   */
   setupTargets() {
     const positions = this.calculateTargetPositions();
 
@@ -61,6 +94,10 @@ export class TargetController {
     });
   }
 
+  /**
+   * Calculates target positions based on the current layout configuration
+   * @returns {Array<THREE.Vector3>} Array of target positions
+   */
   calculateTargetPositions() {
     switch (this.config.layout) {
       case 'linear':
@@ -82,6 +119,10 @@ export class TargetController {
     }
   }
 
+  /**
+   * Calculates linear arrangement positions for targets
+   * @returns {Array<THREE.Vector3>} Array of linear target positions
+   */
   calculateLinearPositions() {
     const positions = [];
     const basePos = new THREE.Vector3(
@@ -99,6 +140,10 @@ export class TargetController {
     return positions;
   }
 
+  /**
+   * Calculates circular arrangement positions for targets
+   * @returns {Array<THREE.Vector3>} Array of circular target positions
+   */
   calculateCircularPositions() {
     const positions = [];
     const center = new THREE.Vector3(
@@ -117,6 +162,10 @@ export class TargetController {
     return positions;
   }
 
+  /**
+   * Calculates grid arrangement positions for targets
+   * @returns {Array<THREE.Vector3>} Array of grid target positions
+   */
   calculateGridPositions() {
     const positions = [];
     const basePos = new THREE.Vector3(
@@ -142,6 +191,10 @@ export class TargetController {
     return positions;
   }
 
+  /**
+   * Calculates V-formation arrangement positions for targets
+   * @returns {Array<THREE.Vector3>} Array of V-formation target positions
+   */
   calculateVFormationPositions() {
     const positions = [];
     const basePos = new THREE.Vector3(
@@ -174,32 +227,10 @@ export class TargetController {
     return positions.slice(0, this.config.count);
   }
 
-  calculateScatteredPositions() {
-    const positions = [];
-    const bounds = this.config.bounds;
-
-    for (let i = 0; i < this.config.count; i++) {
-      let position;
-      let attempts = 0;
-      const maxAttempts = 100;
-
-      do {
-        position = new THREE.Vector3(
-          bounds.minX + Math.random() * (bounds.maxX - bounds.minX),
-          bounds.y,
-          bounds.minZ + Math.random() * (bounds.maxZ - bounds.minZ)
-        );
-        attempts++;
-      } while (
-        attempts < maxAttempts &&
-        this.isTooCloseToExisting(position, positions, this.config.minDistance)
-      );
-
-      positions.push(position);
-    }
-    return positions;
-  }
-
+  /**
+   * Calculates pyramid arrangement positions for targets
+   * @returns {Array<THREE.Vector3>} Array of pyramid target positions
+   */
   calculatePyramidPositions() {
     const positions = [];
     const basePos = new THREE.Vector3(
@@ -229,12 +260,24 @@ export class TargetController {
     return positions;
   }
 
+  /**
+   * Checks if a new position is too close to existing positions
+   * @param {THREE.Vector3} newPos - New position to check
+   * @param {Array<THREE.Vector3>} existingPositions - Array of existing positions
+   * @param {number} minDistance - Minimum distance required between positions
+   * @returns {boolean} True if position is too close to existing positions
+   */
   isTooCloseToExisting(newPos, existingPositions, minDistance) {
     return existingPositions.some(
       (pos) => newPos.distanceTo(pos) < minDistance
     );
   }
 
+  /**
+   * Creates a target object at the specified position
+   * @param {THREE.Vector3} position - Position to create the target at
+   * @returns {THREE.Group} The created target object
+   */
   createTarget(position) {
     const target = SkeletonUtils.clone(this.targetObj);
     target.userData.hp = this.config.hp;
@@ -244,12 +287,19 @@ export class TargetController {
     return target;
   }
 
+  /**
+   * Sets up event listeners for target-related events
+   */
   setupEventListeners() {
     this.eventBus.on(PLAY_AGAIN_EVENT_NAME, () => {
       this.resetTargets();
     });
   }
 
+  /**
+   * Resets all targets to their initial state
+   * Restores visibility, health, and resets animations and movements
+   */
   resetTargets() {
     this.targets.forEach((target) => {
       target.visible = true;
@@ -272,10 +322,18 @@ export class TargetController {
     });
   }
 
+  /**
+   * Gets all target objects
+   * @returns {Array<THREE.Group>} Array of all target objects
+   */
   getTargets() {
     return this.targets;
   }
 
+  /**
+   * Gets the total target count based on the current layout configuration
+   * @returns {number} Total number of targets for the current layout
+   */
   getTargetCount() {
     // Calculate actual target count based on layout
     switch (this.config.layout) {
@@ -293,10 +351,19 @@ export class TargetController {
     }
   }
 
+  /**
+   * Gets the current number of target objects
+   * @returns {number} Current number of target objects
+   */
   getCurrentTargetCount() {
     return this.targets.length;
   }
 
+  /**
+   * Handles a hit on a target, reducing health and triggering elimination
+   * @param {THREE.Group} target - The target that was hit
+   * @returns {boolean} True if target was eliminated, false otherwise
+   */
   onHit(target) {
     let hp = target.userData.hp;
     if (hp < 1) return false;
@@ -315,6 +382,10 @@ export class TargetController {
     return false;
   }
 
+  /**
+   * Starts the elimination animation for a target
+   * @param {THREE.Group} target - The target to animate
+   */
   startTargetEliminationAnimation(target) {
     const animState = this.targetAnimations.get(target);
     if (animState && !animState.isAnimating) {
@@ -324,6 +395,10 @@ export class TargetController {
     }
   }
 
+  /**
+   * Updates all target animations and movements
+   * @param {number} delta - Time delta for animation updates
+   */
   updateAnimations(delta) {
     this.targets.forEach((target) => {
       // Update elimination animations
@@ -360,48 +435,53 @@ export class TargetController {
         }
       }
 
-      // Update movement animations for moving targets
+      // Update movement for moving targets
       const moveState = this.targetMovements.get(target);
-      if (moveState && !target.userData.eliminated) {
-        moveState.time += delta * moveState.speed;
+      if (moveState && target.visible) {
+        moveState.time += delta;
+
+        const time = moveState.time * moveState.speed;
+        const amplitude = moveState.amplitude;
+
+        let offsetX = 0;
+        let offsetZ = 0;
 
         if (moveState.axis === 'x' || moveState.axis === 'both') {
-          target.position.x =
-            moveState.startPosition.x +
-            Math.sin(moveState.time) * moveState.amplitude;
+          offsetX = Math.sin(time) * amplitude;
+        }
+        if (moveState.axis === 'z' || moveState.axis === 'both') {
+          offsetZ = Math.cos(time) * amplitude;
         }
 
-        if (moveState.axis === 'z' || moveState.axis === 'both') {
-          target.position.z =
-            moveState.startPosition.z +
-            Math.sin(moveState.time) * moveState.amplitude;
-        }
+        target.position.x = moveState.startPosition.x + offsetX;
+        target.position.z = moveState.startPosition.z + offsetZ;
       }
     });
   }
 
-  // Method to change target configuration at runtime
+  /**
+   * Changes the target configuration and recreates targets
+   * @param {Object} newConfig - New target configuration object
+   */
   changeConfiguration(newConfig) {
     // Remove existing targets
     this.targets.forEach((target) => {
       this.scene.remove(target);
     });
 
-    this.targets = [];
+    // Update configuration
+    this.config = newConfig;
+    this.count = newConfig.count;
+
+    // Clear existing maps
     this.targetAnimations.clear();
     this.targetMovements.clear();
 
-    // Update configuration
-    this.config = newConfig;
-    this.count = this.getTargetCount(); // Use calculated count instead of config.count
-
-    // Setup new targets
+    // Recreate targets with new configuration
+    this.targets = [];
     this.setupTargets();
 
-    // Emit event to update UI with new target count
-    this.eventBus.emit(TARGET_CONFIG_CHANGED_EVENT_NAME, {
-      targetCount: this.getTargetCount(), // Use calculated count
-      configName: this.config.name,
-    });
+    // Emit configuration change event
+    this.eventBus.emit(TARGET_CONFIG_CHANGED_EVENT_NAME);
   }
 }
