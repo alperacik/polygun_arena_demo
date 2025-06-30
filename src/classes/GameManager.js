@@ -39,9 +39,9 @@ export class GameManager {
     /** @type {GameUIOverlay} UI overlay for game interface */
     this.gameUIOverlay = new GameUIOverlay(this.eventBus);
 
-    /** @type {Joystick} Left joystick for movement control */
+    /** @type {Joystick} Left joystick for movement control (multi-touch supported) */
     this.moveJoystick = new Joystick(this.eventBus, true);
-    /** @type {Joystick} Right joystick for rotation control */
+    /** @type {Joystick} Right joystick for rotation control (multi-touch supported) */
     this.rotateJoystick = new Joystick(this.eventBus, false);
 
     /** @type {AssetLoader} Asset loading and management system */

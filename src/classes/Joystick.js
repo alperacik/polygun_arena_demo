@@ -38,6 +38,8 @@ export class Joystick {
     this.touchListeners = [];
     /** @type {Array} Array of pointer event listener names */
     this.pointerListeners = [];
+    /** @type {number|null} The identifier of the active touch for this joystick */
+    this.touchId = null;
 
     this.calculateSizes();
     this.setupJoystick();
@@ -244,12 +246,22 @@ export class Joystick {
    */
   handleTouchStart(e) {
     if (!this.touchEventsEnabled) return;
-
     e.preventDefault();
-    if (e.touches.length !== 1) return; // Only handle single touch
-
-    const touch = e.touches[0];
-    this.startJoystick(touch.clientX, touch.clientY);
+    // Only start if not already active
+    if (this.active) return;
+    // Find a touch in the correct region
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      const clientX = touch.clientX;
+      if (this.isVisible) {
+        if (clientX > window.innerWidth / 2) continue; // Only left half allowed
+      } else {
+        if (clientX <= window.innerWidth / 2) continue; // Only right half allowed
+      }
+      this.touchId = touch.identifier;
+      this.startJoystick(clientX, touch.clientY);
+      break;
+    }
   }
 
   /**
@@ -257,13 +269,17 @@ export class Joystick {
    * @param {TouchEvent} e - Touch event object
    */
   handleTouchMove(e) {
-    if (!this.active || !this.touchEventsEnabled) return;
-
+    if (!this.active || !this.touchEventsEnabled || this.touchId === null)
+      return;
     e.preventDefault();
-    if (e.touches.length !== 1) return;
-
-    const touch = e.touches[0];
-    this.updateJoystickPosition(touch.clientX, touch.clientY);
+    // Find the touch with our identifier
+    for (let i = 0; i < e.touches.length; i++) {
+      const touch = e.touches[i];
+      if (touch.identifier === this.touchId) {
+        this.updateJoystickPosition(touch.clientX, touch.clientY);
+        break;
+      }
+    }
   }
 
   /**
@@ -271,9 +287,17 @@ export class Joystick {
    * @param {TouchEvent} e - Touch event object
    */
   handleTouchEnd(e) {
-    if (!this.touchEventsEnabled) return;
+    if (!this.touchEventsEnabled || this.touchId === null) return;
     e.preventDefault();
-    this.resetJoystick();
+    // Check if our touch ended
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      if (touch.identifier === this.touchId) {
+        this.resetJoystick();
+        this.touchId = null;
+        break;
+      }
+    }
   }
 
   /**
@@ -304,7 +328,7 @@ export class Joystick {
   resetJoystick() {
     this.active = false;
     this.joystickInput = { x: 0, y: 0 };
-
+    this.touchId = null;
     if (this.isVisible) {
       this.hideJoystick();
     }

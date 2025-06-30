@@ -31,7 +31,7 @@ export const GAME_CONFIG = {
   /** Player movement speed */
   MOVE_SPEED: 50,
   /** Player rotation speed */
-  ROTATION_SPEED: 10,
+  ROTATION_SPEED: 5,
   /** Size of the ground plane */
   GROUND_SIZE: 200,
   /** Camera height from ground */
