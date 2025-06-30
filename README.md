@@ -1,10 +1,60 @@
-# Polygun Arena - Refactored
+# Polygun Arena
 
 A 3D shooting game built with Three.js, featuring a modular and maintainable architecture.
 
+---
+
+## 🚀 Getting Started
+
+Follow these steps to set up and run the project locally:
+
+### 1. Clone the Repository
+
+```bash
+git clone <your-repo-url>
+cd polygun_arena
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Start the Development Server
+
+```bash
+npm start
+```
+
+- Open [http://localhost:9000](http://localhost:9000) in your browser to play.
+
+### 4. Build for Production
+
+```bash
+npm run build
+```
+
+- Output will be in the `dist/` folder.
+
+### 5. Code Quality Tools
+
+```bash
+npm run lint    # Check code with ESLint
+npm run format  # Format code with Prettier
+```
+
+### Troubleshooting
+
+- If you see missing module errors, run `npm install` again.
+- If port 9000 is in use, edit the port in `webpack.config.js`.
+- For Three.js/WebGL errors, ensure your browser supports WebGL.
+
+---
+
 ## 🏗️ Architecture Overview
 
-The codebase has been refactored to follow clean architecture principles with clear separation of concerns:
+The codebase follows clean architecture principles with clear separation of concerns:
 
 ### Core Components
 
@@ -109,44 +159,11 @@ The game now supports multiple target layouts and configurations:
 
 #### Switching Configurations
 
-**Method 1: Change in constants.js**
+**Change in constants.js**
 
 ```javascript
 // In src/helpers/constants.js
 export const CURRENT_TARGET_CONFIG = TARGET_CONFIGS.CIRCULAR;
-```
-
-**Method 2: Runtime switching**
-
-```javascript
-// In your game code
-import { TARGET_CONFIGS } from './helpers/constants';
-
-// Switch to circular layout
-targetController.changeConfiguration(TARGET_CONFIGS.CIRCULAR);
-
-// Switch to grid layout
-targetController.changeConfiguration(TARGET_CONFIGS.GRID);
-```
-
-#### Custom Configurations
-
-Create your own target layouts:
-
-```javascript
-const customConfig = {
-  name: 'My Custom Layout',
-  layout: 'circular',
-  count: 12,
-  radius: 25,
-  centerPosition: { x: 0, y: 0, z: -40 },
-  scale: 0.1,
-  hp: 5,
-  rotation: { x: 0, y: Math.PI / 4, z: 0 },
-  startAngle: Math.PI / 6,
-};
-
-targetController.changeConfiguration(customConfig);
 ```
 
 #### Configuration Properties
@@ -169,7 +186,6 @@ The game automatically calculates the required kills to win based on the current
 - **Dynamic Kill Count**: The win condition adapts to the number of targets in the current configuration
 - **Safe Calculation**: Uses `Math.min(targetCount, KILL_COUNT_TO_WIN)` to ensure the game is always winnable
 - **Special Layouts**: Grid and Pyramid layouts calculate their target count dynamically
-- **Runtime Updates**: Kill counter updates automatically when switching configurations
 
 **Example:**
 
