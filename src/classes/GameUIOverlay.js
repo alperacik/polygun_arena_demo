@@ -11,7 +11,6 @@ import {
   PLAY_AGAIN_EVENT_NAME,
   KILL_COUNT_UPDATE_EVENT_NAME,
   SHOOTING_EVENT_NAME,
-  TARGET_CONFIG_CHANGED_EVENT_NAME,
 } from '../helpers/EventNames';
 import {
   UI_CONFIG,
@@ -68,12 +67,6 @@ export class GameUIOverlay {
 
     this.eventBus.on(SHOOTING_EVENT_NAME, () => {
       this.animateCrosshairSpread();
-    });
-
-    // Listen for target configuration changes
-    this.eventBus.on(TARGET_CONFIG_CHANGED_EVENT_NAME, () => {
-      // Update the kill counter display to reflect new target count
-      this.updateKillCounterDisplay();
     });
   }
 
