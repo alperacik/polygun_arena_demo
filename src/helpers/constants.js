@@ -170,12 +170,17 @@ export const TARGET_CONFIGS = {
   },
 };
 
-// Current target configuration (change this to switch layouts)
+/* global TARGET_CONFIG_NAME */
 /**
- * Current target configuration (change this to switch layouts)
- * @type {Object}
+ * @global
+ * TARGET_CONFIG_NAME is injected at build time by webpack DefinePlugin
  */
-export const CURRENT_TARGET_CONFIG = TARGET_CONFIGS.SCATTERED;
+const configName =
+  typeof TARGET_CONFIG_NAME !== 'undefined' && TARGET_CONFIG_NAME
+    ? TARGET_CONFIG_NAME
+    : 'LINEAR';
+export const CURRENT_TARGET_CONFIG =
+  TARGET_CONFIGS[configName] || TARGET_CONFIGS.SCATTERED;
 
 // Computed effective kill count (ensures game is always winnable)
 // Uses the current target configuration count instead of the old GAME_CONFIG.TARGET_COUNT

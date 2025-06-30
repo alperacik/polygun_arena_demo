@@ -2,6 +2,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlInlineScriptPlugin = require('html-inline-script-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = (env) => {
   return {
@@ -37,6 +38,9 @@ module.exports = (env) => {
         inject: 'body',
       }),
       new HtmlInlineScriptPlugin(),
+      new webpack.DefinePlugin({
+        TARGET_CONFIG_NAME: JSON.stringify(env.TARGET_CONFIG_NAME),
+      }),
     ],
     optimization: {
       minimize: true,

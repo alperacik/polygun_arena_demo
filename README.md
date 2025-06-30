@@ -159,12 +159,8 @@ The game now supports multiple target layouts and configurations:
 
 #### Switching Configurations
 
-**Change in constants.js**
-
-```javascript
-// In src/helpers/constants.js
-export const CURRENT_TARGET_CONFIG = TARGET_CONFIGS.CIRCULAR;
-```
+- **Recommended:** Use the npm build scripts above to generate builds for each configuration.
+- **Advanced:** You can still manually set the default config in `src/helpers/constants.js` for development, but for production builds, use the scripts for best results.
 
 #### Configuration Properties
 
@@ -257,3 +253,29 @@ Each class has a single, well-defined responsibility:
 3. **Collision Detection**: Check for target hits
 4. **Animation Update**: Update weapon and other animations
 5. **Rendering**: Render the scene to the screen
+
+## 🏹 Building for Different Target Configurations
+
+You can build the game for each target configuration separately using the provided npm scripts. Each build will output to its own subdirectory under `dist/`.
+
+### Build Scripts
+
+- `npm run build:linear` → outputs to `dist/linear/`
+- `npm run build:circular` → outputs to `dist/circular/`
+- `npm run build:grid` → outputs to `dist/grid/`
+- `npm run build:v_formation` → outputs to `dist/v_formation/`
+- `npm run build:scattered` → outputs to `dist/scattered/`
+- `npm run build:pyramid` → outputs to `dist/pyramid/`
+- `npm run build:moving` → outputs to `dist/moving/`
+
+To build all configurations at once:
+
+```bash
+npm run build:all
+```
+
+This will generate all variants in their respective folders under `dist/`.
+
+### How it works
+
+The build system uses the `--env TARGET_CONFIG_NAME=<CONFIG>` flag to select the target configuration at build time. You no longer need to manually edit `CURRENT_TARGET_CONFIG` in the code.
